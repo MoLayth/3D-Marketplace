@@ -1,0 +1,53 @@
+﻿@{
+    ViewData["Title"] = "Upload";
+    List<string> maps = new() { "Base Color", "Roughness", "Metallic", "Emission", "Ambient Occlusion" };
+}
+
+<div class="Row-Flex-Container" style="height:100%; padding:10px">
+    <div class="column-Flex-Container" style="width:450px; height: 100%; align-self:flex-start; align-items:stretch; color:white; padding-right:10px; gap:15px">
+        <h3 style="text-align:center; border-bottom: 1px solid white;">Texture</h3>
+        @foreach (var map in maps) {
+            <div class="Row-Flex-Container">
+                <span>@map</span>
+                <input id="@("upload-" + map.Replace(" ", "-")+"-Input")" type="file" style="display:none" />
+                <div style="flex:2"></div>
+                <img id="@("upload-" + map.Replace(" ","-"))" class="image-btn" src="~/resources/upload.svg">
+            </div>
+        }
+        <h3 style="text-align:center; border-bottom: 1px solid white;">Info</h3>
+        <div class="Row-Flex-Container">
+            <span style="flex-shrink:0;">product name</span> 
+            <input type="text"/>
+            <span style="flex-shrink:0;">$</span>
+            <input type="number" style="width:50px"/>
+        </div>
+        <span>Description: </span>
+        <textarea style="flex:1"></textarea>
+    </div>
+
+    <div id="canvas-container" class="canvas" style="width: 100%; height:100%;">
+        <div id="canvas-uploadPanel" class="column-Flex-Container" style="position:absolute; top:50%; left:50%; transform: translateX(-50%) translateY(-50%);">
+            <img class="image-btn" id="canvas-upload3dModelBtn" src="~/resources/upload2.svg" />
+            <input type="file" id="fpxFileInput" style="display:none"/>
+            <span style="color:white">Select Your 3D Model Of Type FPX/GLTF </span>
+        </div>
+        <div id="canvas-modifyPanel" style="flex:2;">
+            <img class="image-btn" id="canvas-resetViewButton" src="~/resources/Reset.svg" style="position:absolute; right:10px; bottom:10px;"/>
+            <img class="image-btn" id="canvas-takeScreenshot" src="~/resources/screenshot.svg" style="position:absolute; left:10px; bottom:10px;" />
+            <img class="image-btn" id="canvas-Save" src="~/resources/Save.svg" style="position:absolute; right:10px; top:10px;" />
+        </div>
+    </div>    
+</div>
+
+@section Scripts {
+    <script type="importmap">
+        {
+            "imports": {
+                "three" : "/lib/three/build/three.module.js",
+                "three/addons/": "/lib/three/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module" src="~/js/Index.js"></script>
+}
