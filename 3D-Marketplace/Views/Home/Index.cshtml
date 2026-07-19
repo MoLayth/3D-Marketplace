@@ -4,32 +4,79 @@
 }
 
 <div class="Row-Flex-Container" style="height:100%; padding:10px">
-    <div class="column-Flex-Container" style="width:450px; height: 100%; align-self:flex-start; align-items:stretch; color:white; padding-right:10px; gap:15px">
-        <h3 style="text-align:center; border-bottom: 1px solid white;">Texture</h3>
-        @foreach (var map in maps) {
-            <div class="Row-Flex-Container">
-                <span>@map</span>
-                <input id="@("upload-" + map.Replace(" ", "-")+"-Input")" type="file" style="display:none" />
-                <div style="flex:2"></div>
-                <img id="@("upload-" + map.Replace(" ","-"))" class="image-btn" src="~/resources/upload.svg">
+    <div style="display:flex; position:relative; width:450px; height: 100%; flex-shrink:0; overflow:auto">
+        <div class="column-Flex-Container" style="position:absolute; width:100%; top:0;left:0; align-items:stretch; color:white; padding-right:10px; gap:15px;">
+            <h3 style="text-align:center; border-bottom: 1px solid white;">Texture</h3>
+            @foreach (var map in maps) {
+                if (map == "Emission") {
+                    <div class="group-container">
+                        <div class="Row-Flex-Container">
+                            <h5>@map</h5>
+                            <input id="@("upload-" + map.Replace(" ", "-") + "-Input")" type="file" style="display:none" accept=".png, .jpg" />
+                            <div style="flex:2"></div>
+                            <img id="@("upload-" + map.Replace(" ", "-"))" class="image-btn" src="~/resources/upload.svg" style="height:50px">
+                        </div>
+                        <div class="group-Details">                            
+                            <div class="Row-Flex-Container">
+                                <span style=" text-wrap:nowrap">Brightness</span>
+                                <div style="flex:2"></div>
+                                <input id="emissionBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
+                            </div>
+                            <div class="Row-Flex-Container">
+                                <span style=" text-wrap:nowrap">Color</span>
+                                <div style="flex:2;"></div>
+                                <input id="emissionColorInput" type="color" style="width:30px" value="#0xffffff" />
+                            </div>
+                        </div>
+                    </div>
+                    continue;
+                }
+
+                <div class="Row-Flex-Container">
+                    <span>@map</span>
+                    <input id="@("upload-" + map.Replace(" ", "-")+"-Input")" type="file" style="display:none" accept=".png, .jpg" />
+                    <div style="flex:2"></div>
+                    <img id="@("upload-" + map.Replace(" ","-"))" class="image-btn" src="~/resources/upload.svg" style="height:50px">
+                </div>
+            }
+            <div class="group-container">
+                <div class="Row-Flex-Container">
+                    <h5>HDRI</h5>
+                    <input id="HDRIInput" type="file" style="display:none" accept=".png, .jpg" />
+                    <div style="flex:2"></div>
+                    <img id="HDRIImg" class="image-btn" src="~/resources/upload.svg" style="height:50px">
+                </div>
+                <div class="group-Details">
+                    <div class="Row-Flex-Container">
+                        <span style=" text-wrap:nowrap">Show As Background</span>
+                        <div style="flex:2;"></div>
+                        <input id="HDMIAsBackgroundInput" style="width:30px;" type="checkbox" />
+                    </div>
+                    <div class="Row-Flex-Container">
+                        <span style=" text-wrap:nowrap">Brightness</span>
+                        <div style="flex:2"></div>
+                        <input id="HDMIBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
+                    </div>
+                </div>
             </div>
-        }
-        <h3 style="text-align:center; border-bottom: 1px solid white;">Info</h3>
-        <div class="Row-Flex-Container">
-            <span style="flex-shrink:0;">product name</span> 
-            <input type="text"/>
-            <span style="flex-shrink:0;">$</span>
-            <input type="number" style="width:50px"/>
+
+            <h3 style="text-align:center; border-bottom: 1px solid white;">Info</h3>
+            <div class="Row-Flex-Container">
+                <span style="flex-shrink:0;">product name</span> 
+                <input type="text"/>
+                <span style="flex-shrink:0;">$</span>
+                <input type="number" style="width:50px"/>
+            </div>
+            <span>Description: </span>
+            <textarea style="height:400px"></textarea>
         </div>
-        <span>Description: </span>
-        <textarea style="flex:1"></textarea>
     </div>
 
     <div id="canvas-container" class="canvas" style="width: 100%; height:100%;">
         <div id="canvas-uploadPanel" class="column-Flex-Container" style="position:absolute; top:50%; left:50%; transform: translateX(-50%) translateY(-50%);">
             <img class="image-btn" id="canvas-upload3dModelBtn" src="~/resources/upload2.svg" />
-            <input type="file" id="fpxFileInput" style="display:none"/>
-            <span style="color:white">Select Your 3D Model Of Type FPX/GLTF </span>
+            <input type="file" id="fpxFileInput" style="display:none" accept=".fbx, .glt, .gltf"/>
+            <span style="color:white"> Select Your 3D Model Of Type FBX/GLTF </span>
         </div>
         <div id="canvas-modifyPanel" style="flex:2;">
             <img class="image-btn" id="canvas-resetViewButton" src="~/resources/Reset.svg" style="position:absolute; right:10px; bottom:10px;"/>
