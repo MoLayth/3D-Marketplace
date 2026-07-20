@@ -1,5 +1,6 @@
 * {
     font-family: 'Times New Roman', Times, serif;
+    color:white;
 }
 html, body {
     margin: 0;
@@ -220,3 +221,30 @@ td {
         background-color: #1a1a1a;
         color: white;
     }
+
+.vertical-close {
+    animation-name: vertical-close-Animation;
+    animation-duration: .15s;
+}
+.vertical-Open {
+    animation-name: vertical-Open-Animation;
+    animation-duration: .25s;
+}
+
+@keyframes vertical-close-Animation{
+    from {
+        transform: scaleY(100%);
+    }
+    to {
+        transform:scaleY(0%);
+    }
+}
+@keyframes vertical-Open-Animation {
+    from {
+        transform: scaleY(0%);
+    }
+
+    to {
+        transform: scaleY(100%);
+    }
+}
