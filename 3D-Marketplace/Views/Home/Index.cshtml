@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Upload";
-    List<string> maps = new() { "Base Color", "Roughness", "Metallic", "Normal-Map", "Emission", "Ambient Occlusion" };
+    List<string> maps = new() { "Base Color", "Roughness", "Metallic", "Normal-Map", "Emission","Ambient Occlusion" };
 }
 
 <div class="Row-Flex-Container" style="height:100%; padding:10px">
@@ -65,10 +65,18 @@
 
             <h3 style="text-align:center; border-bottom: 1px solid white;">Info</h3>
             <div class="Row-Flex-Container">
-                <span style="flex-shrink:0;">product name</span> 
+                <span style="flex-shrink:0;">Product Name:</span> 
                 <input type="text"/>
-                <span style="flex-shrink:0;">$</span>
+            </div>
+            <div class="Row-Flex-Container">
+                <span style="flex-shrink:0;">product Price:</span>
                 <input type="number" style="width:50px"/>
+                <span style="flex-shrink:0;">$</span>
+
+                <div style="flex:1"></div>
+
+                <span style="flex-shrink:0;">Stock:</span>
+                <input type="number" style="width:50px" />
             </div>
             <span>Description: </span>
             <textarea style="height:400px"></textarea>
@@ -80,6 +88,7 @@
             <img class="image-btn" id="canvas-upload3dModelBtn" src="~/resources/upload2.svg" />
             <input type="file" id="fpxFileInput" style="display:none" accept=".fbx, .glb, .gltf"/>
             <span style="color:white"> Select Your 3D Model Of Type FBX/GLTF </span>
+            <div style="background:#a20000; border-radius:20px; padding:10px;">All Mesh's Should Have The Same Material!</div>
         </div>
 
         <div id="canvas-modifyPanel" class="column-Flex-Container" style="position:absolute; right:10px; bottom:10px; align-items:end">
