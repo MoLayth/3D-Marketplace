@@ -1,0 +1,45 @@
+﻿@{
+    string name = ViewData["name"]?.ToString() ?? ""; // this is very important for a form
+    string userNameInputId = ViewData["userNameInputId"]?.ToString() ?? "user"; // this value is important when i have multiple user input in the same cshtml
+}
+
+<div class="column-Flex-Container" style="width:100%">
+    <div class="Row-Flex-Container" style="width:100%">
+        <label for="user" class="field-label" style="width:130px">Username:</label>
+        <input id="@userNameInputId" class="field-input" name="@name" required style="width:100%" placeholder="@@user_name">
+    </div>
+</div>
+
+<script>
+    document.getElementById("@userNameInputId").addEventListener("input",(e)=>{
+        const input = e.target;
+        const cursorPosition = input.selectionStart;
+        value = input.value;
+        const originalLength = value.length;
+
+        // Remove any character that isn't (English text, numbers, '_')
+        const regex = /[^a-zA-Z0-9_]/;
+        if(regex.test(value)){
+            value = value.replace(/[^a-zA-Z0-9_]/g, "");
+        }
+
+        // add @@ to the start
+        if (!value.startsWith('@@') && value != "") {
+            value = "@@" + value;
+        }
+
+        // check if i remove anything
+        if (value != input.value) {
+            input.value = value;
+
+            const lengthDifference = originalLength - value.length;
+            const newPosition = Math.max(0, cursorPosition - lengthDifference);
+
+            // this is the only way to override the default browser behavior
+            setTimeout(()=>{
+                input.setSelectionRange(newPosition, newPosition); // fixing the text cart problem
+            },0)
+        };
+    });
+
+</script>
