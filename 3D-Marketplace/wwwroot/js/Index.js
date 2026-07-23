@@ -13,6 +13,7 @@ loadProfileInput.addEventListener('change', (e) => {
 
     const fileSizeMB = Number(file.size / 1048576).toFixed(1);
     if (fileSizeMB > 3) {
+        e.target.value = ''; // resets the input element 
         showWarningMessage("the file size is bigger than 3MB")
         return;
     }

@@ -238,9 +238,24 @@ td {
     padding: 10px;
     position: fixed;
     left: 10px;
-/*    transform: translateX(-50%);*/
     top: 65px;
     z-index: 999
+}
+.blur-panel {
+    background: #39393964;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); /* Safari support */
+}
+.floating-panel {
+    position: fixed;
+    display: flex;
+    left: 50%;
+    top: 50%;
+    background: #1B1B1B;
+    border-radius: 5px;
+    padding: 10px;
+    transform: translate(-50%,-50%);
+    z-index: 30;
 }
 
 .vertical-close {

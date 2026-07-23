@@ -9,8 +9,6 @@
 		<img id="removeProfileImage" class="image-btn" src="~/resources/X.svg" style="display:none;position:absolute; height: 20px; right:-10px; top:0px;" />
 	</div>
 	<div class="column-Flex-Container" style=" align-items:stretch; gap:10px">
-		@await Html.PartialAsync("_UsernameField")
-		@await Html.PartialAsync("_PasswordField")
 		<div class="Row-Flex-Container" style="justify-content:center;">
 			<label style="width:130px; text-wrap:nowrap">Display Name:</label>
 			<input type="text" />
@@ -18,6 +16,9 @@
 
 	</div>
 	<textarea style="width:550px; height:400px" placeholder="Bio"></textarea>
-	<button style="font-size:large; background:#cd0006">Create Account</button>
+	<div class="Row-Flex-Container" style="gap:10px">
+		<button style="font-size:large; background:#cd0006; width:150px">Save</button>
+		<button style="font-size:large; background:#cd0006; width:150px">SignOut</button>
+	</div>
 </div>
 <script src="/js/Index.js"></script>
