@@ -1,24 +1,35 @@
 ﻿@{
 	ViewData["Title"] = "Edit/Create Profile";
 }
+@model UserData
 <div class="column-Flex-Container" style="width:100%; height:100%; padding:15px; justify-items:center; gap:10px;">
-	<div id="profileImage" class="column-Flex-Container" style="position:relative; padding:10px; background:url('/resources/ProfileCircle.svg');
-				height:100px;width:100px; background-size: 100% 100%; background-repeat:no-repeat; justify-content:center; border-radius:50%;">
-		<img id="loadProfileImageBtn" class="image-btn" src="/resources/avatar.svg" style="height:60px;" />
+	<div id="profileImage" class="column-Flex-Container" style="position:relative; padding:2px; background:url('/resources/ProfileCircle.svg');
+				height:100px;width:100px; justify-content:center; border-radius:50%;">
+		
+		@if(Model.ProfilePicture != null) {
+			<img id="loadProfileImageBtn" class="image-btn" src="@Model.ProfilePicture" style="width: 100%; height: 100%; object-fit: cover; border-radius:50%; object-position: center;" />
+			<img id="removeProfileImage" class="image-btn" src="~/resources/X.svg" style="position:absolute; height: 20px; right:-10px; top:0px;" />
+		}
+		else {
+			<img id="loadProfileImageBtn" class="image-btn" src="/resources/avatar.svg" style="width: 65%; height: 65%; object-fit: fill; object-position: center;" />
+			<img id="removeProfileImage" class="image-btn" src="~/resources/X.svg" style="display:none;position:absolute; height: 20px; right:-10px; top:0px;" />			
+		}
 		<input id="loadProfileInput" type="file" style="display:none" accept=".png, .jpg"/>
-		<img id="removeProfileImage" class="image-btn" src="~/resources/X.svg" style="display:none;position:absolute; height: 20px; right:-10px; top:0px;" />
 	</div>
-	<div class="column-Flex-Container" style=" align-items:stretch; gap:10px">
-		<div class="Row-Flex-Container" style="justify-content:center;">
-			<label style="width:130px; text-wrap:nowrap">Display Name:</label>
-			<input type="text" />
-		</div>
 
+	<div class="Row-Flex-Container" style="justify-content:center;">
+		<label style="width:130px; text-wrap:nowrap">Display Name:</label>
+		<input id="nameInput" type="text" value="@Model.Name"/>
 	</div>
-	<textarea style="width:550px; height:400px" placeholder="Bio"></textarea>
+
+	<textarea id="bioInput" style="width:550px; height:400px" placeholder="Bio">@Model.Bio</textarea>
 	<div class="Row-Flex-Container" style="gap:10px">
-		<button style="font-size:large; background:#cd0006; width:150px">Save</button>
+		<button style="font-size:large; background:#cd0006; width:150px" onclick="saveProfile()">Save</button>
 		<button style="font-size:large; background:#cd0006; width:150px">SignOut</button>
 	</div>
 </div>
+
+<script>
+	const currentUsername = "@Model.UserName";
+</script>
 <script src="/js/Index.js"></script>

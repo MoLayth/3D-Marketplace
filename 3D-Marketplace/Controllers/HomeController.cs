@@ -1,25 +1,29 @@
 using _3D_Marketplace.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 
-namespace _3D_Marketplace.Controllers
-{
-    public class HomeController : Controller
-    {
+namespace _3D_Marketplace.Controllers {
+    public class HomeController : Controller {
         private ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public HomeController(ApplicationDbContext context) {
+        public HomeController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment) {
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         public IActionResult Index() {
 
+            // this view data info well be used in _layout.cshtml 
+            UserData user = null;
             if (HttpContext.Request.Cookies.ContainsKey("RememberMeUser")) {
-                ViewData["Name"] = "NEw Name";
-                ViewData["ProfilePic"] = null;
+                user = _context.Users.FirstOrDefault();
+                ViewData["Name"] = user.Name;
+                ViewData["ProfilePic"] = user.ProfilePicture;
             }
 
-            return View();
+            return View(user);
         }
 
         [HttpGet]
@@ -53,6 +57,50 @@ namespace _3D_Marketplace.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> UpdateProfile(string username, string name, string bio,bool removePicture, IFormFile? profilePic) {
+
+            UserData user = _context.Users.FirstOrDefault(u=>u.UserName == username);
+
+            if (user == null) {
+                Console.WriteLine("there no user with username: " + username);
+                return BadRequest();
+            }
+
+            user.Name = name;
+            user.Bio = bio;
+
+            if (profilePic != null && profilePic.Length != 0) {
+                removeOldProfilePicture();
+
+                string fileType = profilePic.ContentType.ToLower().Contains("png") ? ".png" : ".jpg";
+                string savePath = Path.Join(_webHostEnvironment.WebRootPath , "/resources/userPic", username + fileType);
+                // save the uploaded image
+                using (var stream = new FileStream(savePath, FileMode.Create)) {
+                    await profilePic.CopyToAsync(stream);
+                }
+
+                user.ProfilePicture = $"/resources/userPic/{username}{fileType}";
+            }
+            else {
+                if (removePicture) {
+                    removeOldProfilePicture();
+                }
+            }
+
+            void removeOldProfilePicture() {
+                if (string.IsNullOrEmpty(user.ProfilePicture)) return;
+
+                string picPath = Path.Join(_webHostEnvironment.WebRootPath, user.ProfilePicture);
+                System.IO.File.Delete(picPath);
+                user.ProfilePicture = null;
+            }
+
+            _context.SaveChanges();
+
+            return Ok();
+        }
+        
+        [HttpPost]
         public IActionResult SignIn(string user, string password) {
             var existingUser = _context.Users.FirstOrDefault(u => u.UserName == user);
 
@@ -60,8 +108,7 @@ namespace _3D_Marketplace.Controllers
 
             PasswordVerificationResult result = hasher.VerifyHashedPassword(user, existingUser.Password, password);
 
-            if (result == PasswordVerificationResult.SuccessRehashNeeded ||
-                result == PasswordVerificationResult.SuccessRehashNeeded) {
+            if (result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded) {
                 AddRememberUserCookies(existingUser);
                 return Ok();
             }
