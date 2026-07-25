@@ -118,15 +118,13 @@
     </div>
 </div>
 
-@section Scripts {
-    <script type="importmap">
-        {
-            "imports": {
-                "three" : "/lib/three/build/three.module.js",
-                "three/addons/": "/lib/three/examples/jsm/"
-            }
+<script type="importmap">
+    {
+        "imports": {
+            "three" : "/lib/three/build/three.module.js",
+            "three/addons/": "/lib/three/examples/jsm/"
         }
-    </script>
+    }
+</script>
 
-    <script type="module" src="~/js/UploadModelPanel.js"></script>
-}
+<script type="module" src="~/js/UploadModelPanel.js?v=@DateTime.Now.Ticks"></script>

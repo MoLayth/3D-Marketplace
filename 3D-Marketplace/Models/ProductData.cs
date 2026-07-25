@@ -52,5 +52,7 @@ namespace _3D_Marketplace.Models {
 
         [Required]
         public UserData Seller { get; set; }
+
+        public bool isPublished  { get; set; }
     }
 }

@@ -9,9 +9,9 @@
 </head>
 <body class="site-layout">
     <div class="Row-Flex-Container" style="padding:10px; background:#1B1B1B">
-        <img src="~/resources/3D-Marketplace.png" style="height:40px" />
+        <img src="~/resources/3D-Marketplace.png" style="height:40px; margin-right:20px" />
         <div style="flex:2"></div>
-        <img class="image-btn" src="~/resources/upload2.svg" />
+        <img class="image-btn" src="~/resources/upload2.svg" onclick="switchToTab('UploadMode')" />
 
         @if (!string.IsNullOrEmpty(ViewData["Name"]?.ToString())) {
             <span>@ViewData["Name"]</span>
@@ -33,7 +33,7 @@
             @RenderBody()
         </main>
     </div>
-    @await Html.PartialAsync("_WarningMessage");
+    @await Html.PartialAsync("_WarningMessage")
 
     <div class="closePanel blur-panel" id="SignPanel" targetPanelId="SignPanel" style="display:none; position:absolute; width:100%; height:100%;">
         <div class="floating-panel" onclick="event.stopPropagation()">

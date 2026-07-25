@@ -1,7 +1,8 @@
 using _3D_Marketplace.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Threading.Tasks;
 
 namespace _3D_Marketplace.Controllers {
     public class HomeController : Controller {
@@ -26,11 +27,63 @@ namespace _3D_Marketplace.Controllers {
             return View(user);
         }
 
+        public IActionResult LoadTab_EditProfile() {
+            string username = Request.Cookies["RememberMeUser"];
+            return PartialView("EditProfile", model: _context.Users.FirstOrDefault(u => u.UserName == username));
+        }
+        public IActionResult LoadTab_UploadMode() {
+            return PartialView("UploadModelPanel");
+        }
+
         [HttpGet]
         public IActionResult GetUserData(string Username) {
             UserData selectedUser = _context.Users.FirstOrDefault(u => u.UserName == Username); 
 
             return Json(new { name = selectedUser.Name, bio = selectedUser.Bio , profileImageUrl = selectedUser.ProfilePicture });
+        }
+
+        public async Task<IActionResult> SaveModel(IFormFile? BaseColor, IFormFile? Roughness, IFormFile? Emission,IFormFile? Metallic,
+                                       IFormFile? NormalMap, IFormFile? AmbientOcclusion, IFormFile? HDRI,
+                                       float Emission_Brightness, string Emission_Color, bool HDRI_ShowAsBackground,
+                                       float HDRI_Brightness,string ProductName,float productPrice,int Stock, string Description) {
+
+            string? baseColorPath = null;
+            if (BaseColor != null)
+                baseColorPath = await SaveImage(ProductName, "baseColor", BaseColor);
+
+
+            //string? RoughnessPath = null;
+            //if (Roughness != null) {
+            //    RoughnessPath = await SaveImage(ProductName, "Roughness", baseColor);
+
+
+            //string username = Request.Cookies["RememberMeUser"];
+            //UserData user = _context.Users.FirstOrDefault(u=> u.UserName == username);
+            //if (user == null) {
+            //    return BadRequest();
+            //}
+
+            //user.products.Add(new() {
+
+            //});
+            return Ok();
+        }
+
+        private async Task<string> SaveImage(string folderName,string fileName,IFormFile pic) {
+            string fileType = pic.ContentType.ToLower().Contains("png") ? ".png" : ".jpg";
+
+            string dir = Path.Join(_webHostEnvironment.WebRootPath, "/resources/", folderName);
+            if (!Directory.Exists(dir)) { 
+                Directory.CreateDirectory(dir);
+            }
+
+            string savePath = Path.Join(_webHostEnvironment.WebRootPath, "/resources/", folderName, fileName + fileType);
+            
+            using (var stream = new FileStream(savePath, FileMode.Create)) {
+                await pic.CopyToAsync(stream);
+            }
+
+            return "/resources/" + folderName + fileName + fileType;
         }
 
         [HttpPost]
@@ -70,7 +123,7 @@ namespace _3D_Marketplace.Controllers {
             user.Bio = bio;
 
             if (profilePic != null && profilePic.Length != 0) {
-                removeOldProfilePicture();
+                RemoveUserProfilePicture(user);
 
                 string fileType = profilePic.ContentType.ToLower().Contains("png") ? ".png" : ".jpg";
                 string savePath = Path.Join(_webHostEnvironment.WebRootPath , "/resources/userPic", username + fileType);
@@ -83,23 +136,46 @@ namespace _3D_Marketplace.Controllers {
             }
             else {
                 if (removePicture) {
-                    removeOldProfilePicture();
+                    RemoveUserProfilePicture(user);
                 }
-            }
-
-            void removeOldProfilePicture() {
-                if (string.IsNullOrEmpty(user.ProfilePicture)) return;
-
-                string picPath = Path.Join(_webHostEnvironment.WebRootPath, user.ProfilePicture);
-                System.IO.File.Delete(picPath);
-                user.ProfilePicture = null;
-            }
+            }            
 
             _context.SaveChanges();
 
             return Ok();
         }
-        
+        void RemoveUserProfilePicture(UserData user) {
+            if (string.IsNullOrEmpty(user.ProfilePicture)) return;
+
+            string picPath = Path.Join(_webHostEnvironment.WebRootPath, user.ProfilePicture);
+            System.IO.File.Delete(picPath);
+            user.ProfilePicture = null;
+        }
+
+        [HttpPost]
+        public IActionResult DeleteAccount(string username) {
+            UserData user = _context.Users.FirstOrDefault(u => u.UserName == username);
+            if (user == null) {
+                return BadRequest();
+            }
+
+            RemoveUserProfilePicture(user);
+            _context.Users.Remove(user);
+            _context.SaveChanges();
+
+            if (Request.Cookies.ContainsKey("RememberMeUser"))
+                Response.Cookies.Delete("RememberMeUser");
+
+            return Ok();
+        }
+        [HttpPost]
+        public IActionResult SicgnOut() {
+            if (Request.Cookies.ContainsKey("RememberMeUser")) {
+                Response.Cookies.Delete("RememberMeUser");
+            }
+            return Ok();
+        }
+
         [HttpPost]
         public IActionResult SignIn(string user, string password) {
             var existingUser = _context.Users.FirstOrDefault(u => u.UserName == user);

@@ -4,7 +4,7 @@ function ShowSignOptionPanel() {
     else SignOptionPanel.style.display = "none";
 }
 function showEditProfilePanel() {
-
+    switchToTab('EditProfile');
 }
 
 document.querySelectorAll(".closePanel ").forEach(elemnt => {
@@ -64,15 +64,42 @@ document.getElementById('SignInBtn').addEventListener('click', async () => {
     //updateSignData(userName);
 });
 
-//async function updateSignData(username) {
+const tabContainer = document.getElementById('tabElementContainer');
+async function switchToTab(tabName) {
+    let html = "";
+    let response = null;
 
-//    const response = await fetch(`/Home/GetUserData?Username${username}`, {
-//        method: 'GET'
-//    });
+    switch (tabName) {
+        case 'EditProfile':
+            response = await fetch('/Home/LoadTab_EditProfile', { method: 'POST' });
+            break;
 
-//    const value = await response.json();
+        case 'UploadMode':
+            response = await fetch('/Home/LoadTab_UploadMode', { method: 'POST' });
+            break;
+    }
 
-//    sessionStorage.setItem("Name", value.name);
-//    sessionStorage.setItem("bio", value.bio);
-//    sessionStorage.setItem("profileImageUrl", value.profileImageUrl);
-//}
+    html = await response.text();
+    tabContainer.innerHTML = html;
+    executeInjectedScripts(tabContainer); // this well just Execute the new loaded script inside the tabContainer.
+}
+
+// because how the browser is woking we need just to run createElement and copy 
+// all the script from the container so the browser run them.
+function executeInjectedScripts(container) {
+    const scripts = container.querySelectorAll("script");
+
+    scripts.forEach(oldScript => {
+        const newScript = document.createElement("script");
+
+        Array.from(oldScript.attributes).forEach(attr => {
+            newScript.setAttribute(attr.name, attr.value);
+        });
+
+        if (oldScript.textContent) {
+            newScript.textContent = oldScript.textContent;
+        }
+
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+}

@@ -1,6 +1,7 @@
 ﻿import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { element } from '../lib/three/build/three.tsl';
 
 const scene = new THREE.Scene(); // Set up the scene
 
@@ -232,8 +233,15 @@ HDMIBrightnessInput.addEventListener('input', (e) => {
     render.toneMappingExposure = parseFloat(e.target.value);
 });
 
-const canvas_resetViewButton = document.getElementById('canvas-resetViewButton');
-const canvas_Save = document.getElementById('canvas-Save');
+// save the project without publishing it
+document.getElementById('canvas-Save').addEventListener('click', () => {
+    const formData = new FormData();
+
+    document.querySelectorAll('.textureUploadBtn').forEach(element => {
+        const input = document.getElementById(element.getAttribute("data-targetInoutId"));
+        formData.append(`${input.getAttribute('data-map').replace('-', '')}`, input.files[0]);
+    });
+});
 
 
 const thumbnailImage = document.getElementById('thumbnailImage');
