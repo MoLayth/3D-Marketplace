@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\resources\3d-assets\%40BD_Furniture\Drawer\" />
     <Folder Include="wwwroot\resources\userPic\" />
   </ItemGroup>
 

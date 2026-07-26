@@ -10,6 +10,9 @@ namespace _3D_Marketplace.Models {
         public float CameraDefaultZPos { get; set; }
 
         [Column(TypeName = "varchar(500)")]
+        public string _3dModel { get; set; }
+
+        [Column(TypeName = "varchar(500)")]
         public string? BaseColor { get; set; }
 
         [Column(TypeName = "varchar(500)")]
@@ -54,5 +57,6 @@ namespace _3D_Marketplace.Models {
         public UserData Seller { get; set; }
 
         public bool isPublished  { get; set; }
+        public bool isOverwrite { get; set; } //deprecated
     }
 }

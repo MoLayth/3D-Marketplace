@@ -2,6 +2,7 @@
     ViewData["Title"] = "Upload";
     List<string> maps = new() { "Base Color", "Roughness", "Metallic", "Normal-Map", "Emission", "Ambient Occlusion" };
 }
+@model ProductData?
 
 <div class="Row-Flex-Container" style="height:100%; padding:10px">
     <div style="display:flex; position:relative; width:450px; height: 100%; flex-shrink:0; overflow:auto">
@@ -66,26 +67,26 @@
             <h3 style="text-align:center; border-bottom: 1px solid white;">Info</h3>
             <div class="Row-Flex-Container">
                 <span style="flex-shrink:0;">Product Name:</span>
-                <input type="text" />
+                <input id="productName" required type="text" />
             </div>
             <div class="Row-Flex-Container">
                 <span style="flex-shrink:0;">product Price:</span>
-                <input type="number" style="width:50px" />
+                <input id="productPrice" type="number" value="0" style="width:50px; text-align:center" />
                 <span style="flex-shrink:0;">$</span>
 
                 <div style="flex:1"></div>
 
                 <span style="flex-shrink:0;">Stock:</span>
-                <input type="number" style="width:50px" />
+                <input id="StockInput" type="number" value="0" style="width:50px; text-align:center" />
             </div>
             <span>Description: </span>
-            <textarea style="height:400px"></textarea>
+            <textarea id="DescriptionInput" style="height:400px"></textarea>
         </div>
     </div>
 
     <div id="canvas-container" class="canvas" style="width: 100%; height:100%;">
         <div id="canvas-uploadPanel" class="column-Flex-Container" style="position:absolute; top:50%; left:50%; transform: translateX(-50%) translateY(-50%);">
-            <img class="image-btn" id="canvas-upload3dModelBtn" src="~/resources/upload2.svg" />
+            <img class="image-btn" id="canvas-upload3dModelBtn" src="~/resources/AddModel.svg" style="height:60px" />
             <input type="file" id="fpxFileInput" style="display:none" accept=".fbx, .glb, .gltf" />
             <span style="color:white"> Select Your 3D Model Of Type FBX/GLTF </span>
             <div style="background:#a20000; border-radius:20px; padding:10px;">All Mesh's Should Have The Same Material!</div>
@@ -116,6 +117,7 @@
 
         <img id="thumbnailImage" style="height:100px; position:absolute; top:10px; right:10px; display:none; border:1px solid white;border-radius:5px;" />
     </div>
+    
 </div>
 
 <script type="importmap">
@@ -126,5 +128,9 @@
         }
     }
 </script>
-
+<script>
+        // const isOverwrite = @(Json.Serialize(Model?.isOverwrite ?? false));
+        const productId = @(Json.Serialize(Model?.Id ?? -1));
+        const isPublished = @(Json.Serialize(Model?.isPublished ?? false));
+</script>
 <script type="module" src="~/js/UploadModelPanel.js?v=@DateTime.Now.Ticks"></script>

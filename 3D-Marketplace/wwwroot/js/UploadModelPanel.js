@@ -1,7 +1,6 @@
 ﻿import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-import { element } from '../lib/three/build/three.tsl';
 
 const scene = new THREE.Scene(); // Set up the scene
 
@@ -39,17 +38,18 @@ setDefault_HDMI();
 model = null;
 
 const fpxFileInput = document.getElementById("fpxFileInput");
+let _3dModel = null;
 document.getElementById("canvas-upload3dModelBtn").addEventListener('click', () => {
     fpxFileInput.click();
 })
 fpxFileInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    _3dModel = event.target.files[0];
+    if (!_3dModel) return;
 
     const reader = new FileReader();
     reader.onload = function (e) {
         const buffer = e.target.result;
-        const fileName = file.name.toLowerCase();
+        const fileName = _3dModel.name.toLowerCase();
 
         if (fileName.endsWith('.fbx')) {
             const fbxObject = fpxLoader.parse(buffer, '');
@@ -79,7 +79,7 @@ fpxFileInput.addEventListener('change', (event) => {
         event.target.value = "";
     }
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsArrayBuffer(_3dModel);
 
 })
 
@@ -114,7 +114,7 @@ function updateTexture(targetMap, texture) {
             texture.mapping = THREE.EquirectangularReflectionMapping;
 
             scene.environment = texture;
-            if (HDMIAsBackgroundInput.checked) scene.background = texture;
+            if (HDRIAsBackgroundInput.checked) scene.background = texture;
             break;
     }
 
@@ -176,7 +176,7 @@ function setDefault_HDMI() {
     textureLoader.load('/resources/DefaultHDMI.jpg', (t) => {
         t.mapping = THREE.EquirectangularReflectionMapping;
         scene.environment = t;
-        if (HDMIAsBackgroundInput.checked) scene.background = null;
+        if (HDRIAsBackgroundInput.checked) scene.background = null;
     });
 }
 
@@ -220,27 +220,65 @@ document.querySelectorAll('.textureUploadBtn').forEach((element) => {
     });
 })
 
-const HDMIAsBackgroundInput = document.getElementById('HDMIAsBackgroundInput');
-HDMIAsBackgroundInput.addEventListener("change", (e) => {
+const HDRIAsBackgroundInput = document.getElementById('HDMIAsBackgroundInput');
+HDRIAsBackgroundInput.addEventListener("change", (e) => {
     if (e.target.checked) {
         scene.background = scene.environment;
     } else {
         scene.background = null;
     }
 });
-const HDMIBrightnessInput = document.getElementById("HDMIBrightnessInput");
-HDMIBrightnessInput.addEventListener('input', (e) => {
+const HDRIBrightnessInput = document.getElementById("HDMIBrightnessInput");
+HDRIBrightnessInput.addEventListener('input', (e) => {
     render.toneMappingExposure = parseFloat(e.target.value);
 });
 
+
+const productNameInput = document.getElementById('productName');
+const productPriceInput = document.getElementById('productPrice');
+const StockInput = document.getElementById('StockInput');
+const DescriptionInput = document.getElementById('DescriptionInput');
 // save the project without publishing it
-document.getElementById('canvas-Save').addEventListener('click', () => {
+document.getElementById('canvas-Save').addEventListener('click', async () => {
+
+    if (productNameInput.value == "") {
+        productNameInput.reportValidity();
+        return;
+    }
+
     const formData = new FormData();
 
     document.querySelectorAll('.textureUploadBtn').forEach(element => {
         const input = document.getElementById(element.getAttribute("data-targetInoutId"));
-        formData.append(`${input.getAttribute('data-map').replace('-', '')}`, input.files[0]);
+        // if file exist
+        if (input && input.files && input.files[0]) {
+            const key = input.getAttribute('data-map').replace('-', '');
+            formData.append(key, input.files[0]);
+        }
     });
+    const isHdriBackground = HDRIAsBackgroundInput.type === 'checkbox' ? HDRIAsBackgroundInput.checked : (HDRIAsBackgroundInput?.value === 'true');
+
+    formData.append("ViewDefaultRotation", JSON.stringify({ x: viewDefaultRotation.x, y: viewDefaultRotation.y }));
+    formData.append("CameraDefaultZPos", cameraDefaultZPos);
+
+    formData.append("_3dMofel", _3dModel);
+    formData.append("productId", productId); // this is varible is set in UploadMpdelPanel.cshtml
+    formData.append("isPublished", isPublished); // this is varible is set in UploadMpdelPanel.cshtml
+    formData.append("Emission_Brightness", parseFloat(emissionBrightnessInput.value));
+    formData.append("Emission_Color", emissionColorInput.value);
+    formData.append("HDRI_ShowAsBackground", isHdriBackground);
+    formData.append("HDRI_Brightness", parseFloat(HDRIBrightnessInput.value));
+    formData.append("ProductName", productNameInput.value);
+    formData.append("productPrice", productPriceInput.value);
+    formData.append("Stock", StockInput.value);
+    formData.append("Description", DescriptionInput.value);
+
+    const saveResponse = await fetch('/Home/SaveModel', { method: 'POST', body: formData });
+
+    // show the user something to know this success
+    if (saveResponse.ok) {
+        console.log("Ok saved");
+    }
 });
 
 

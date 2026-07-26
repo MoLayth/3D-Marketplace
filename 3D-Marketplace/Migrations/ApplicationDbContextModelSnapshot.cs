@@ -86,6 +86,13 @@ namespace _3D_Marketplace.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(100)");
 
+                    b.Property<string>("_3dModel")
+                        .IsRequired()
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<bool>("isOverwrite")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("isPublished")
                         .HasColumnType("bit");
 
