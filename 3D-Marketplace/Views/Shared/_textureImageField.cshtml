@@ -1,0 +1,16 @@
+﻿@{
+    string name = ViewData["Name"]?.ToString() ?? "";
+
+    string resetBtnId = name.Replace(" ", "-") + "-resetBtn";
+    string inputId = name.Replace(" ", "-") + "-Input";
+}
+<div class="Row-Flex-Container" style="width:100%">
+    <span>@name</span>
+    <input data-map="@name.Replace(" ", "-")" id="@inputId" type="file" style="display:none" accept=".png, .jpg" />
+
+    <div style="flex:2"></div> <!-- horizontal space -->
+
+    <img id="@resetBtnId" class="image-btn  " src="/resources/X.svg" style="height:30px" />
+
+    <img data-targetInputId="@inputId" data-resetBtn="@resetBtnId" class="image-btn  textureUploadBtn" src="~/resources/upload.svg" style="height:50px">
+</div>

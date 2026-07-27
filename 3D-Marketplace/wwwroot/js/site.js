@@ -38,7 +38,6 @@ document.getElementById('createAccountBtn').addEventListener('click', async () =
         return;
     }
     location.reload();
-    //updateSignData(userName);
 });
 
 document.getElementById('SignInBtn').addEventListener('click', async () => {
@@ -66,6 +65,15 @@ document.getElementById('SignInBtn').addEventListener('click', async () => {
 
 const tabContainer = document.getElementById('tabElementContainer');
 async function switchToTab(tabName) {
+
+    // check if the user is sign in
+    const checkResponse = await fetch('/Home/IsUserSignIn', { method: 'GET' });
+    const isUserSignIn = await checkResponse.json();
+    if (!isUserSignIn) {
+        showWarningMessage("Sign In/ Create Account First");
+        return;
+    }
+
     let html = "";
     let response = null;
 

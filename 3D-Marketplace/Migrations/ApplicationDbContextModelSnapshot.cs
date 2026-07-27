@@ -32,6 +32,10 @@ namespace _3D_Marketplace.Migrations
                     b.Property<string>("AmbientOcclusion")
                         .HasColumnType("varchar(500)");
 
+                    b.Property<string>("Background")
+                        .IsRequired()
+                        .HasColumnType("varchar(500)");
+
                     b.Property<string>("BaseColor")
                         .HasColumnType("varchar(500)");
 
@@ -52,13 +56,11 @@ namespace _3D_Marketplace.Migrations
                         .HasColumnType("char(7)");
 
                     b.Property<string>("HDRI")
+                        .IsRequired()
                         .HasColumnType("varchar(500)");
 
                     b.Property<float>("HDRI_Brightness")
                         .HasColumnType("real");
-
-                    b.Property<bool>("HDRI_ShowAsBackground")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Metallic")
                         .HasColumnType("varchar(500)");
@@ -82,6 +84,10 @@ namespace _3D_Marketplace.Migrations
                     b.Property<int>("Stock")
                         .HasColumnType("int");
 
+                    b.Property<string>("Thumbnail")
+                        .IsRequired()
+                        .HasColumnType("varchar(500)");
+
                     b.Property<string>("ViewDefaultRotation")
                         .IsRequired()
                         .HasColumnType("varchar(100)");
@@ -89,9 +95,6 @@ namespace _3D_Marketplace.Migrations
                     b.Property<string>("_3dModel")
                         .IsRequired()
                         .HasColumnType("varchar(500)");
-
-                    b.Property<bool>("isOverwrite")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("isPublished")
                         .HasColumnType("bit");

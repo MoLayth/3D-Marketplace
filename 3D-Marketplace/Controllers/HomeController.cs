@@ -22,7 +22,7 @@ namespace _3D_Marketplace.Controllers {
                 ViewData["ProfilePic"] = user.ProfilePicture;
             }
 
-            return View(user);
+            return View(_context.products.ToArray());
         }
 
         public IActionResult LoadTab_EditProfile() {
@@ -49,16 +49,17 @@ namespace _3D_Marketplace.Controllers {
 
         [HttpPost]
         public async Task<IActionResult> SaveModel(int productId,bool isPublished, string ViewDefaultRotation, float CameraDefaultZPos,
-                                       IFormFile _3dMofel,IFormFile? BaseColor, IFormFile? Roughness, IFormFile? Emission,
-                                       IFormFile? Metallic,IFormFile? NormalMap, IFormFile? AmbientOcclusion, IFormFile? HDRI,
-                                       float Emission_Brightness, string Emission_Color, bool HDRI_ShowAsBackground,
-                                       float HDRI_Brightness,string ProductName,float productPrice,int Stock, string Description) {
+                                       IFormFile? Thumbnail, IFormFile _3dMofel,IFormFile? BaseColor, IFormFile? Roughness, IFormFile? Emission,
+                                       IFormFile? Metallic,IFormFile? NormalMap, IFormFile? AmbientOcclusion, IFormFile? HDRI, IFormFile? Background,
+                                       float Emission_Brightness, string Emission_Color,float HDRI_Brightness,
+                                       string ProductName,float productPrice,int Stock, string Description) {
 
 
             UserData user = GetUserViaCookies();
             string safeFolderName = Path.Join("3d-assets", string.Concat(user.UserName.Split(Path.GetInvalidFileNameChars())) , string.Concat(ProductName.Split(Path.GetInvalidFileNameChars())));
 
             string _3dModelPath = await SaveFile(safeFolderName, "_3dModel", _3dMofel);
+            string thumbnailPath = await SaveFile(safeFolderName, "Thumbnail", Thumbnail);
             string? baseColorPath = BaseColor != null ? await SaveFile(safeFolderName, "baseColor", BaseColor) : null;
             string? roughnessPath = Roughness != null ? await SaveFile(safeFolderName, "roughness", Roughness) : null;
             string? emissionPath = Emission != null ? await SaveFile(safeFolderName, "emission", Emission) : null;
@@ -79,6 +80,7 @@ namespace _3D_Marketplace.Controllers {
                 existingProduct.CameraDefaultZPos = CameraDefaultZPos;
                 existingProduct.ViewDefaultRotation = ViewDefaultRotation;
 
+                // if the user remove an previously assigned text and the texture still exist then delete it except thumbnail
                 if (string.IsNullOrEmpty(baseColorPath)) DeleteFileIfExist(existingProduct.BaseColor);
                 if (string.IsNullOrEmpty(roughnessPath)) DeleteFileIfExist(existingProduct.Roughness);
                 if (string.IsNullOrEmpty(emissionPath)) DeleteFileIfExist(existingProduct.Emission);
@@ -94,13 +96,13 @@ namespace _3D_Marketplace.Controllers {
                 existingProduct.NormalMap = normalPath;
                 existingProduct.AmbientOcclusion = aoPath;
                 existingProduct.HDRI = hdriPath;
+                existingProduct.Thumbnail = string.IsNullOrEmpty(thumbnailPath) ? existingProduct.Thumbnail : thumbnailPath;
 
                 existingProduct.Emission_Brightness = Emission_Brightness;
                 existingProduct.Emission_Color = Emission_Color;
-                existingProduct.HDRI_ShowAsBackground = HDRI_ShowAsBackground;
                 existingProduct.HDRI_Brightness = HDRI_Brightness;
                 existingProduct.isPublished = isPublished;
-                existingProduct.isOverwrite = true;
+                //existingProduct.isOverwrite = true;
             }
             else {
                 ProductData product = new ProductData {
@@ -113,6 +115,7 @@ namespace _3D_Marketplace.Controllers {
 
                     // Texture Paths
                     _3dModel = _3dModelPath,
+                    Thumbnail = thumbnailPath,
                     BaseColor = baseColorPath,
                     Roughness = roughnessPath,
                     Emission = emissionPath,
@@ -124,10 +127,9 @@ namespace _3D_Marketplace.Controllers {
                     // Settings
                     Emission_Brightness = Emission_Brightness,
                     Emission_Color = Emission_Color,
-                    HDRI_ShowAsBackground = HDRI_ShowAsBackground,
                     HDRI_Brightness = HDRI_Brightness,
 
-                    isOverwrite = true,
+                    //isOverwrite = true,
                     isPublished = isPublished,
 
                     CameraDefaultZPos = CameraDefaultZPos,
@@ -136,7 +138,7 @@ namespace _3D_Marketplace.Controllers {
                 user.products.Add(product);
             }
 
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
             return Ok();
         }
 
@@ -274,6 +276,11 @@ namespace _3D_Marketplace.Controllers {
             else {
                 return BadRequest();
             }
+        }
+
+        [HttpGet]
+        public IActionResult IsUserSignIn() {
+            return Json(Request.Cookies.ContainsKey("RememberMeUser"));
         }
 
         [HttpGet]

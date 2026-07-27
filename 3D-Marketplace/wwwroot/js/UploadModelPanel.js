@@ -34,9 +34,19 @@ let model = new THREE.Object3D();
 const modelMaterial = new THREE.MeshStandardMaterial();
 modelMaterial.emissive = new THREE.Color("#000000").multiplyScalar(1);
 setDefault_HDMI();
+setDefault_Background();
+
+const glassMetrial = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    transmission: 1.0,  // Completely translucent
+    roughness: 0.0,     // Perfectly smooth surface
+    thickness: 1.5,     // Simulates physical volume/magnification
+    ior: 1.5,           // Index of Refraction (1.0 = air, 1.33 = water, 1.5 = glass)
+})
 
 model = null;
 
+const meshsListContainer = document.getElementById("MeshesList");
 const fpxFileInput = document.getElementById("fpxFileInput");
 let _3dModel = null;
 document.getElementById("canvas-upload3dModelBtn").addEventListener('click', () => {
@@ -63,15 +73,19 @@ fpxFileInput.addEventListener('change', (event) => {
 
     function setupLoadedModel(loadedSceneOrObject) {
         model = loadedSceneOrObject;
+        let meshesHtml = "";
 
         model.traverse((child) => {
             if (child.isMesh) {
+                meshesHtml += `<span style="text-wrap:nowrap;">${child.name}</span>`;
+
                 child.castShadow = true;
                 child.receiveShadow = true;
                 child.material = modelMaterial;
             }
         });
 
+        meshsListContainer.innerHTML = meshesHtml;
         scene.add(model);
         updateCanvasUI();
 
@@ -82,7 +96,6 @@ fpxFileInput.addEventListener('change', (event) => {
     reader.readAsArrayBuffer(_3dModel);
 
 })
-
 
 //const maps = ["Base-Color", "Roughness", "Metallic", "Emission", "Ambient-Occlusion"];
 function updateTexture(targetMap, texture) {
@@ -114,7 +127,11 @@ function updateTexture(targetMap, texture) {
             texture.mapping = THREE.EquirectangularReflectionMapping;
 
             scene.environment = texture;
-            if (HDRIAsBackgroundInput.checked) scene.background = texture;
+            //if (HDRIAsBackgroundInput.checked) scene.background = texture;
+            break;
+        case 'Background':
+            texture.colorSpace = THREE.SRGBColorSpace;
+            scene.background = texture;
             break;
     }
 
@@ -136,6 +153,10 @@ function updateEmission() {
 
     modelMaterial.needsUpdate = true;
 }
+document.getElementById('normalMapStrengthInput').addEventListener('input', (e) => {
+    const value = parseFloat(e.target.value);
+    modelMaterial.normalScale.set(value, value);
+})
 
 function resetTextureToDefault(imgBtn, targetMap) {
     switch (targetMap) {
@@ -167,6 +188,10 @@ function resetTextureToDefault(imgBtn, targetMap) {
         case 'HDRI':
             setDefault_HDMI();
             break;
+
+        case 'Background':
+            setDefault_Background();
+            break;
     }
     imgBtn.src = "/resources/upload.svg";
     modelMaterial.needsUpdate = true;
@@ -176,12 +201,18 @@ function setDefault_HDMI() {
     textureLoader.load('/resources/DefaultHDMI.jpg', (t) => {
         t.mapping = THREE.EquirectangularReflectionMapping;
         scene.environment = t;
-        if (HDRIAsBackgroundInput.checked) scene.background = null;
+    });
+}
+function setDefault_Background() {
+    textureLoader.load('/resources/ModelBackground.jpg', (t) => {
+        t.colorSpace = THREE.SRGBColorSpace;
+        scene.background = t;
     });
 }
 
+
 document.querySelectorAll('.textureUploadBtn').forEach((element) => {
-    const inputEl = document.getElementById(element.getAttribute('data-targetInoutId'));
+    const inputEl = document.getElementById(element.getAttribute('data-targetInputId'));
     const resetBtn = document.getElementById(element.getAttribute('data-resetBtn'));
     resetBtn.style.display = "none";
 
@@ -220,14 +251,6 @@ document.querySelectorAll('.textureUploadBtn').forEach((element) => {
     });
 })
 
-const HDRIAsBackgroundInput = document.getElementById('HDMIAsBackgroundInput');
-HDRIAsBackgroundInput.addEventListener("change", (e) => {
-    if (e.target.checked) {
-        scene.background = scene.environment;
-    } else {
-        scene.background = null;
-    }
-});
 const HDRIBrightnessInput = document.getElementById("HDMIBrightnessInput");
 HDRIBrightnessInput.addEventListener('input', (e) => {
     render.toneMappingExposure = parseFloat(e.target.value);
@@ -256,17 +279,21 @@ document.getElementById('canvas-Save').addEventListener('click', async () => {
             formData.append(key, input.files[0]);
         }
     });
-    const isHdriBackground = HDRIAsBackgroundInput.type === 'checkbox' ? HDRIAsBackgroundInput.checked : (HDRIAsBackgroundInput?.value === 'true');
 
     formData.append("ViewDefaultRotation", JSON.stringify({ x: viewDefaultRotation.x, y: viewDefaultRotation.y }));
     formData.append("CameraDefaultZPos", cameraDefaultZPos);
 
+    // if this a new project and dont have a thumbnail then just capture one
+    if (thumbnaiFile == null && productId < 0) {
+        await capturedThumbnail();
+    }
+
     formData.append("_3dMofel", _3dModel);
+    formData.append("Thumbnail", thumbnaiFile, "thumbnail.png");
     formData.append("productId", productId); // this is varible is set in UploadMpdelPanel.cshtml
     formData.append("isPublished", isPublished); // this is varible is set in UploadMpdelPanel.cshtml
     formData.append("Emission_Brightness", parseFloat(emissionBrightnessInput.value));
     formData.append("Emission_Color", emissionColorInput.value);
-    formData.append("HDRI_ShowAsBackground", isHdriBackground);
     formData.append("HDRI_Brightness", parseFloat(HDRIBrightnessInput.value));
     formData.append("ProductName", productNameInput.value);
     formData.append("productPrice", productPriceInput.value);
@@ -285,32 +312,58 @@ document.getElementById('canvas-Save').addEventListener('click', async () => {
 const thumbnailImage = document.getElementById('thumbnailImage');
 document.getElementById('canvas-takeScreenshot').addEventListener('click', capturedThumbnail);
 let thumbnaiTimerId = null;
+let thumbnaiFile = null;
 function capturedThumbnail() {
-    render.render(scene, camera);
+    return new Promise((resolve) => {
+        const width = 500;
+        const height = 500;
+        // Save original canvas size & camera aspect ratio so we can restor them when seting is don
+        const originalWidth = render.domElement.width;
+        const originalHeight = render.domElement.height;
+        const originalAspect = camera.aspect;
 
-    thumbnailImage.classList.remove('vertical-close');
-    thumbnailImage.classList.remove('vertical-Open');
-    clearTimeout(thumbnaiTimerId);
+        // render a squer thumbnai
+        render.setSize(width, height, false);
+        camera.aspect = 1;
+        camera.updateProjectionMatrix();
+        render.render(scene, camera);
 
-    const thumbnai = render.domElement.toDataURL('image/png', .8)
-    thumbnailImage.src = thumbnai;
-    thumbnailImage.classList.add('vertical-Open');
-    thumbnailImage.style.display = "flex";
-
-    // also save the postion and rotation this well be improtant later when the user well try to view the model
-    cameraDefaultZPos = camera.position.z;
-    viewDefaultRotation.x = cameraParent.rotation.x;
-    viewDefaultRotation.y = model.rotation.z;
-
-    thumbnaiTimerId = setTimeout(() => {
+        thumbnailImage.classList.remove('vertical-close');
         thumbnailImage.classList.remove('vertical-Open');
-        thumbnailImage.classList.add('vertical-close');
+        clearTimeout(thumbnaiTimerId);
+
+        const thumbnailDataUrl = render.domElement.toDataURL('image/png', 0.8);
+
+        thumbnailImage.src = thumbnailDataUrl;
+        thumbnailImage.classList.add('vertical-Open');
+        thumbnailImage.style.display = "flex";
+
+        cameraDefaultZPos = camera.position.z;
+        viewDefaultRotation.x = cameraParent.rotation.x;
+        viewDefaultRotation.y = model.rotation.z;
 
         thumbnaiTimerId = setTimeout(() => {
-            thumbnailImage.style.display = "none";
-        }, 150);
+            thumbnailImage.classList.remove('vertical-Open');
+            thumbnailImage.classList.add('vertical-close');
 
-    }, 2500);
+            thumbnaiTimerId = setTimeout(() => {
+                thumbnailImage.style.display = "none";
+            }, 150);
+        }, 2500);
+
+        // Convert canvas to Blob asynchronously
+        render.domElement.toBlob((blob) => {
+
+            // Restore original canvas dimensions & camera aspect ratio
+            render.setSize(originalWidth, originalHeight, false);
+            camera.aspect = originalAspect;
+            camera.updateProjectionMatrix();
+            render.render(scene, camera); // Re-render live viewport
+
+            thumbnaiFile = blob;
+            resolve(blob); // Resolve the promise when the file is ready!
+        }, 'image/png', 0.8);
+    });
 }
 
 const canvas_uploadPanel = document.getElementById('canvas-uploadPanel');

@@ -10,6 +10,9 @@ namespace _3D_Marketplace.Models {
         public float CameraDefaultZPos { get; set; }
 
         [Column(TypeName = "varchar(500)")]
+        public string Thumbnail { get; set; }
+
+        [Column(TypeName = "varchar(500)")]
         public string _3dModel { get; set; }
 
         [Column(TypeName = "varchar(500)")]
@@ -35,8 +38,10 @@ namespace _3D_Marketplace.Models {
         public string? AmbientOcclusion { get; set; }
 
         [Column(TypeName = "varchar(500)")]
-        public string? HDRI { get; set; }
-        public bool HDRI_ShowAsBackground {  get; set; }
+        public string Background { get; set; }
+
+        [Column(TypeName = "varchar(500)")]
+        public string HDRI { get; set; }
         public float HDRI_Brightness{ get; set; }
 
         [Required]
@@ -57,6 +62,5 @@ namespace _3D_Marketplace.Models {
         public UserData Seller { get; set; }
 
         public bool isPublished  { get; set; }
-        public bool isOverwrite { get; set; } //deprecated
     }
 }

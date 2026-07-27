@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Upload";
-    List<string> maps = new() { "Base Color", "Roughness", "Metallic", "Normal-Map", "Emission", "Ambient Occlusion" };
+    List<string> maps = new() { "Base Color", "Roughness", "Metallic", "Normal-Map", "Emission", "Ambient Occlusion", "HDRI", "Background" };
 }
 @model ProductData?
 
@@ -9,60 +9,46 @@
         <div class="column-Flex-Container" style="position:absolute; width:100%; top:0;left:0; align-items:stretch; color:white; padding-right:10px; gap:15px;">
             <h3 style="text-align:center; border-bottom: 1px solid white;">Texture</h3>
             @foreach (var map in maps) {
-                if (map == "Emission") {
-                    <div class="group-container">
-                        <div class="Row-Flex-Container">
-                            <h5>@map</h5>
-                            <input data-map="@map.Replace(" ", "-")" id="@(map.Replace(" ", "-") + "-Input")" type="file" style="display:none" accept=".png, .jpg" />
-                            <div style="flex:2"></div>
-                            <img id="@(map.Replace(" ", "-") + "-resetBtn")" class="image-btn  " src="/resources/X.svg" style="height:30px" />
-                            <img data-resetBtn="@(map.Replace(" ", "-") + "-resetBtn")" data-targetInoutId="@(map.Replace(" ", "-") + "-Input")" class="image-btn textureUploadBtn" src="~/resources/upload.svg" style="height:50px">
-                        </div>
-                        <div class="group-Details">
-                            <div class="Row-Flex-Container">
-                                <span style=" text-wrap:nowrap">Brightness</span>
-                                <div style="flex:2"></div>
-                                <input id="emissionBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
-                            </div>
-                            <div class="Row-Flex-Container">
-                                <span style=" text-wrap:nowrap">Color</span>
-                                <div style="flex:2;"></div>
-                                <input id="emissionColorInput" type="color" style="width:30px" value="#000000" />
-                            </div>
-                        </div>
-                    </div>
-                    continue;
-                }
-
-                <div class="Row-Flex-Container">
-                    <span>@map</span>
-                    <input data-map="@map.Replace(" ", "-")" id="@(map.Replace(" ", "-") + "-Input")" type="file" style="display:none" accept=".png, .jpg" />
-                    <div style="flex:2"></div>
-                    <img id="@(map.Replace(" ", "-") + "-resetBtn")" class="image-btn  " src="/resources/X.svg" style="height:30px" />
-                    <img data-targetInoutId="@(map.Replace(" ", "-") + "-Input")" data-resetBtn="@(map.Replace(" ", "-") + "-resetBtn")" class="image-btn  textureUploadBtn" src="~/resources/upload.svg" style="height:50px">
+                <div class="Row-Flex-Container" style="width:100%">
+                    @await Html.PartialAsync("_textureImageField", new ViewDataDictionary(ViewData) { { "Name", map } })
                 </div>
             }
-            <div class="group-container">
-                <div class="Row-Flex-Container">
-                    <h5>HDRI</h5>
-                    <input id="HDRIInput" data-map="HDRI" type="file" style="display:none" accept=".png, .jpg" />
-                    <div style="flex:2"></div>
-                    <img id="HDRI-resetBtn" class="image-btn  " src="/resources/X.svg" style="height:30px" />
-                    <img data-targetInoutId="HDRIInput" data-resetBtn="HDRI-resetBtn" class="image-btn textureUploadBtn" src="~/resources/upload.svg" style="height:50px">
-                </div>
-                <div class="group-Details">
-                    <div class="Row-Flex-Container">
-                        <span style=" text-wrap:nowrap">Show As Background</span>
-                        <div style="flex:2;"></div>
-                        <input id="HDMIAsBackgroundInput" style="width:30px;" type="checkbox" />
-                    </div>
-                    <div class="Row-Flex-Container">
-                        <span style=" text-wrap:nowrap">Brightness</span>
-                        <div style="flex:2"></div>
-                        <input id="HDMIBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
+
+            <!------------------------------------------------------------------------------------------------->
+
+            <h3 style="text-align:center; border-bottom: 1px solid white;">Extra</h3>
+            <div class="Row-Flex-Container">
+                <span style=" text-wrap:nowrap">Emission Brightness</span>
+                <div style="flex:2"></div>
+                <input id="emissionBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
+            </div>
+            <div class="Row-Flex-Container">
+                <span style=" text-wrap:nowrap">Emission Color</span>
+                <div style="flex:2;"></div>
+                <input id="emissionColorInput" type="color" style="width:30px" value="#000000" />
+            </div>            
+            <div class="Row-Flex-Container">
+                <span style=" text-wrap:nowrap">Scene Brightness</span>
+                <div style="flex:2"></div>
+                <input id="HDMIBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
+            </div>
+
+            <div class="Row-Flex-Container">
+                <span style=" text-wrap:nowrap">normalMap Strength</span>
+                <div style="flex:2"></div>
+                <input id="normalMapStrengthInput" type="number" style="width:30px; text-align:center" value="1" max="5" min="-5"/>
+            </div>
+
+            <div class="column-Flex-Container" style="align-items:start">
+                <span style="text-wrap:nowrap"> Apply Glass Material To: </span>
+                <div class="column-Flex-Container" style="height:100px; width:100%; position:relative; overflow:auto; border: 1px solid white; border-radius:5px;">
+                    <div id="MeshesList" class="column-Flex-Container" style="position:absolute; top:0px; left:0px; height:100%; width:100%; align-items:start;padding:5px">
+                        <span style="text-wrap:nowrap; color:red"> No Model Currently loaded</span>
                     </div>
                 </div>
             </div>
+
+            <!------------------------------------------------------------------------------------------------->
 
             <h3 style="text-align:center; border-bottom: 1px solid white;">Info</h3>
             <div class="Row-Flex-Container">
@@ -84,7 +70,7 @@
         </div>
     </div>
 
-    <div id="canvas-container" class="canvas" style="width: 100%; height:100%;">
+    <div id="canvas-container" class="canvas" style="width: 100%; height:100%;">        
         <div id="canvas-uploadPanel" class="column-Flex-Container" style="position:absolute; top:50%; left:50%; transform: translateX(-50%) translateY(-50%);">
             <img class="image-btn" id="canvas-upload3dModelBtn" src="~/resources/AddModel.svg" style="height:60px" />
             <input type="file" id="fpxFileInput" style="display:none" accept=".fbx, .glb, .gltf" />
@@ -129,7 +115,6 @@
     }
 </script>
 <script>
-        // const isOverwrite = @(Json.Serialize(Model?.isOverwrite ?? false));
         const productId = @(Json.Serialize(Model?.Id ?? -1));
         const isPublished = @(Json.Serialize(Model?.isPublished ?? false));
 </script>
