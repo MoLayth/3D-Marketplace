@@ -46,7 +46,28 @@ const glassMetrial = new THREE.MeshPhysicalMaterial({
 
 model = null;
 
+const canvas_uploadPanel = document.getElementById('canvas-uploadPanel');
+const canvas_modifyPanel = document.getElementById('canvas-modifyPanel');
 const meshsListContainer = document.getElementById("MeshesList");
+function updateCanvasUI() {
+    if (!model) { // if there is no model
+        canvas_modifyPanel.style.display = "none";
+        canvas_uploadPanel.style.display = "flex"
+        return;
+    }
+    canvas_modifyPanel.style.display = "flex";
+    canvas_uploadPanel.style.display = "none"
+}
+updateCanvasUI();
+const canvas_removeModelBtn = document.getElementById('canvas-removeModel');
+canvas_removeModelBtn.addEventListener('click', () => {
+    scene.remove(model);
+    model = null;
+    render.render(scene, camera)
+    updateCanvasUI();
+    meshsListContainer.innerHTML = '<span style="text-wrap:nowrap; color:red"> No Model Currently loaded</span>';
+})
+
 const fpxFileInput = document.getElementById("fpxFileInput");
 let _3dModel = null;
 document.getElementById("canvas-upload3dModelBtn").addEventListener('click', () => {
@@ -73,19 +94,20 @@ fpxFileInput.addEventListener('change', (event) => {
 
     function setupLoadedModel(loadedSceneOrObject) {
         model = loadedSceneOrObject;
-        let meshesHtml = "";
 
+        meshsListContainer.innerHTML = "";
         model.traverse((child) => {
             if (child.isMesh) {
-                meshesHtml += `<span style="text-wrap:nowrap;">${child.name}</span>`;
+                meshsListContainer.appendChild(createToggleButton(child.name, (s) => {
+                    handelAssigningOfGlassMetrial(child.name, s);
+                }));
 
                 child.castShadow = true;
                 child.receiveShadow = true;
                 child.material = modelMaterial;
             }
         });
-
-        meshsListContainer.innerHTML = meshesHtml;
+        
         scene.add(model);
         updateCanvasUI();
 
@@ -97,6 +119,92 @@ fpxFileInput.addEventListener('change', (event) => {
 
 })
 
+function handelAssigningOfGlassMetrial(meshName, state) {
+    model.traverse(child => {
+        if (child.isMesh) {
+            if (meshName == child.name) {
+                if (state === true) child.material = glassMetrial;
+                else child.material = modelMaterial;
+            }
+        }
+    });        
+}
+
+function createToggleButton(labelText = '', onPress = (bool) => { }) {
+    const container = document.createElement('div');
+    container.classList.add("Row-Flex-Container")
+    container.style.gap = '8px';
+    container.style.width = "100%"
+    container.style.padding = "5px";
+    container.style.borderRadius = "5px"
+
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    label.style.textWrap = "nowrap";
+
+    const whiteSpace = document.createElement('div');
+    whiteSpace.style.flex = '2';
+
+
+    const imgButton = document.createElement('img');
+    imgButton.classList.add('image-btn');
+    imgButton.src = '/resources/AddSign.svg';
+
+
+    let isActive = false;
+
+    const toggleHandler = () => {
+        isActive = !isActive;
+
+        if (isActive) {
+            imgButton.src = '/resources/X.svg';
+            if (typeof onPress === 'function') {
+                container.style.background = 'green';
+                onPress(isActive);
+            }
+        } else {
+            imgButton.src = '/resources/AddSign.svg';
+            if (typeof onPress === 'function') {
+                container.style.background = 'transparent';
+                onPress(isActive);
+            }
+        }
+    };
+    
+    imgButton.addEventListener('click', toggleHandler);
+
+    container.appendChild(label);
+    container.appendChild(whiteSpace);
+    container.appendChild(imgButton);
+    return container;
+}
+
+document.getElementById('glassMetrialColor').addEventListener('input', (e) => {
+    glassMetrial.color.set(e.target.value); // .set() works cleanly with hex strings like "#ffffff"
+});
+
+// Transmission Input (Range is 0.0 to 1.0)
+document.getElementById('transmissionId').addEventListener('input', (e) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value)) {
+        glassMetrial.transmission = value;
+    }
+});
+
+document.getElementById('thicknessId').addEventListener('input', (e) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value)) {
+        glassMetrial.thickness = value;
+    }
+});
+
+// IOR Input (Glass is usually 1.5, Water is 1.33, Diamond is 2.42)
+document.getElementById('iorId').addEventListener('input', (e) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value)) {
+        glassMetrial.ior = value;
+    }
+});
 //const maps = ["Base-Color", "Roughness", "Metallic", "Emission", "Ambient-Occlusion"];
 function updateTexture(targetMap, texture) {
     switch (targetMap) {
@@ -127,7 +235,6 @@ function updateTexture(targetMap, texture) {
             texture.mapping = THREE.EquirectangularReflectionMapping;
 
             scene.environment = texture;
-            //if (HDRIAsBackgroundInput.checked) scene.background = texture;
             break;
         case 'Background':
             texture.colorSpace = THREE.SRGBColorSpace;
@@ -365,28 +472,6 @@ function capturedThumbnail() {
         }, 'image/png', 0.8);
     });
 }
-
-const canvas_uploadPanel = document.getElementById('canvas-uploadPanel');
-const canvas_modifyPanel = document.getElementById('canvas-modifyPanel');
-function updateCanvasUI() {
-    if (!model) { // if there is no model
-        canvas_modifyPanel.style.display = "none";
-        canvas_uploadPanel.style.display = "flex"
-        return;
-    }
-    canvas_modifyPanel.style.display = "flex";
-    canvas_uploadPanel.style.display = "none"
-}
-updateCanvasUI();
-const canvas_removeModelBtn = document.getElementById('canvas-removeModel');
-canvas_removeModelBtn.addEventListener('click', () => {
-    scene.remove(model);
-    model = null;
-    render.render(scene, camera)
-    updateCanvasUI();
-})
-
-
 
 const Timer = new THREE.Timer();
 Timer.connect(document);

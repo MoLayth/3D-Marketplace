@@ -39,6 +39,9 @@
                 <input id="normalMapStrengthInput" type="number" style="width:30px; text-align:center" value="1" max="5" min="-5"/>
             </div>
 
+            <!------------------------------------------------------------------------------------------------->
+            <h3 style="text-align:center; border-bottom: 1px solid white;">Glass Material</h3>
+
             <div class="column-Flex-Container" style="align-items:start">
                 <span style="text-wrap:nowrap"> Apply Glass Material To: </span>
                 <div class="column-Flex-Container" style="height:100px; width:100%; position:relative; overflow:auto; border: 1px solid white; border-radius:5px;">
@@ -46,6 +49,24 @@
                         <span style="text-wrap:nowrap; color:red"> No Model Currently loaded</span>
                     </div>
                 </div>
+            </div>
+
+            <div class="Row-Flex-Container">
+                <span style="text-wrap:nowrap">Transmission</span>
+                <div style="flex:2"></div>
+                <input id="transmissionId" type="number" min="0" max="1" step="0.1" style="width:45px; text-align:center" value="1" />
+            </div>
+
+            <div class="Row-Flex-Container">
+                <span style="text-wrap:nowrap">Thickness</span>
+                <div style="flex:2"></div>
+                <input id="thicknessId" type="number" min="0" step="0.1" style="width:45px; text-align:center" value="1.5" />
+            </div>
+
+            <div class="Row-Flex-Container">
+                <span style="text-wrap:nowrap">IOR</span>
+                <div style="flex:2"></div>
+                <input id="iorId" type="number" min="1" max="2.5" step="0.05" style="width:45px; text-align:center" value="1.5" />
             </div>
 
             <!------------------------------------------------------------------------------------------------->
