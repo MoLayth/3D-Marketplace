@@ -7,87 +7,102 @@
 <div class="Row-Flex-Container" style="height:100%; padding:10px">
     <div style="display:flex; position:relative; width:450px; height: 100%; flex-shrink:0; overflow:auto">
         <div class="column-Flex-Container" style="position:absolute; width:100%; top:0;left:0; align-items:stretch; color:white; padding-right:10px; gap:15px;">
-            <h3 style="text-align:center; border-bottom: 1px solid white;">Texture</h3>
-            @foreach (var map in maps) {
-                <div class="Row-Flex-Container" style="width:100%">
-                    @await Html.PartialAsync("_textureImageField", new ViewDataDictionary(ViewData) { { "Name", map } })
+            <div id="headerTabs" style="font-size:xx-large"></div>
+
+            <div id="textureContainer" class="column-Flex-Container" style="width:100%; align-items:stretch">
+                @* <h3 style="text-align:center; border-bottom: 1px solid white;">Texture</h3> *@
+                @* @foreach (var map in maps) {
+                    <div class="Row-Flex-Container" style="width:100%">
+                        @await Html.PartialAsync("_textureImageField", new ViewDataDictionary(ViewData) { { "Name", map } })
+                    </div>
+                } *@
+                <div id="tabsSpace" class="Row-Flex-Container" style="width:100%;">
                 </div>
-            }
-
+                <div id="materialSpace" class="Row-Flex-Container" style="width:100%">
+                    <span style="text-wrap:nowrap; color:red"> No Model Currently loaded</span>
+                </div>
             <!------------------------------------------------------------------------------------------------->
 
-            <h3 style="text-align:center; border-bottom: 1px solid white;">Extra</h3>
-            <div class="Row-Flex-Container">
-                <span style=" text-wrap:nowrap">Emission Brightness</span>
-                <div style="flex:2"></div>
-                <input id="emissionBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
-            </div>
-            <div class="Row-Flex-Container">
-                <span style=" text-wrap:nowrap">Emission Color</span>
-                <div style="flex:2;"></div>
-                <input id="emissionColorInput" type="color" style="width:30px" value="#000000" />
-            </div>            
-            <div class="Row-Flex-Container">
-                <span style=" text-wrap:nowrap">Scene Brightness</span>
-                <div style="flex:2"></div>
-                <input id="HDMIBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
-            </div>
+                @* <div class="Row-Flex-Container">
+                    <span style=" text-wrap:nowrap">Emission Brightness</span>
+                    <div style="flex:2"></div>
+                    <input id="emissionBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
+                </div>
+                <div class="Row-Flex-Container">
+                    <span style=" text-wrap:nowrap">Emission Color</span>
+                    <div style="flex:2;"></div>
+                    <input id="emissionColorInput" type="color" style="width:30px" value="#000000" />
+                </div>            
 
-            <div class="Row-Flex-Container">
-                <span style=" text-wrap:nowrap">normalMap Strength</span>
-                <div style="flex:2"></div>
-                <input id="normalMapStrengthInput" type="number" style="width:30px; text-align:center" value="1" max="5" min="-5"/>
-            </div>
+                <div class="Row-Flex-Container">
+                    <span style=" text-wrap:nowrap">normalMap Strength</span>
+                    <div style="flex:2"></div>
+                    <input id="normalMapStrengthInput" type="number" style="width:30px; text-align:center" value="1" max="5" min="-5"/>
+                </div> *@
+                <h3 style="text-align:center; border-bottom: 1px solid white;">Extra</h3>
+                <div class="Row-Flex-Container">
+                    <span style=" text-wrap:nowrap">Scene Brightness</span>
+                    <div style="flex:2"></div>
+                    <input id="HDMIBrightnessInput" type="number" style="width:30px; text-align:center" value="1" />
+                </div>
 
             <!------------------------------------------------------------------------------------------------->
-            <h3 style="text-align:center; border-bottom: 1px solid white;">Glass Material</h3>
+                <h3 style="text-align:center; border-bottom: 1px solid white;">Glass Material</h3>
 
-            <div class="column-Flex-Container" style="align-items:start">
-                <span style="text-wrap:nowrap"> Apply Glass Material To: </span>
-                <div class="column-Flex-Container" style="height:100px; width:100%; position:relative; overflow:auto; border: 1px solid white; border-radius:5px;">
-                    <div id="MeshesList" class="column-Flex-Container" style="position:absolute; top:0px; left:0px; height:100%; width:100%; align-items:start;padding:5px">
-                        <span style="text-wrap:nowrap; color:red"> No Model Currently loaded</span>
+                <div class="column-Flex-Container" style="align-items:start">
+                    <span style="text-wrap:nowrap"> Apply Glass Material To: </span>
+                    <div class="column-Flex-Container" style="height:100px; width:100%; position:relative; overflow:auto; border: 1px solid white; border-radius:5px;">
+                        <div id="MeshesList" class="column-Flex-Container" style="position:absolute; top:0px; left:0px; height:100%; width:100%; align-items:start;padding:5px">
+                            <span style="text-wrap:nowrap; color:red"> No Model Currently loaded</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="Row-Flex-Container">
-                <span style="text-wrap:nowrap">Transmission</span>
-                <div style="flex:2"></div>
-                <input id="transmissionId" type="number" min="0" max="1" step="0.1" style="width:45px; text-align:center" value="1" />
-            </div>
+                <div class="Row-Flex-Container">
+                    <span style=" text-wrap:nowrap">Color</span>
+                    <div style="flex:2;"></div>
+                    <input id="glassMetrialColor" type="color" style="width:30px" value="#FFFFFF" />
+                </div>
+                <div class="Row-Flex-Container">
+                    <span style="text-wrap:nowrap">Transmission</span>
+                    <div style="flex:2"></div>
+                    <input id="transmissionId" type="number" min="0" max="1" step="0.1" style="width:45px; text-align:center" value="1" />
+                </div>
 
-            <div class="Row-Flex-Container">
-                <span style="text-wrap:nowrap">Thickness</span>
-                <div style="flex:2"></div>
-                <input id="thicknessId" type="number" min="0" step="0.1" style="width:45px; text-align:center" value="1.5" />
-            </div>
+                <div class="Row-Flex-Container">
+                    <span style="text-wrap:nowrap">Thickness</span>
+                    <div style="flex:2"></div>
+                    <input id="thicknessId" type="number" min="0" step="0.1" style="width:45px; text-align:center" value="1.5" />
+                </div>
 
-            <div class="Row-Flex-Container">
-                <span style="text-wrap:nowrap">IOR</span>
-                <div style="flex:2"></div>
-                <input id="iorId" type="number" min="1" max="2.5" step="0.05" style="width:45px; text-align:center" value="1.5" />
-            </div>
+                <div class="Row-Flex-Container">
+                    <span style="text-wrap:nowrap">IOR</span>
+                    <div style="flex:2"></div>
+                    <input id="iorId" type="number" min="1" max="2.5" step="0.05" style="width:45px; text-align:center" value="1.5" />
+                </div>
 
+            </div>
             <!------------------------------------------------------------------------------------------------->
 
-            <h3 style="text-align:center; border-bottom: 1px solid white;">Info</h3>
-            <div class="Row-Flex-Container">
-                <span style="flex-shrink:0;">Product Name:</span>
-                <input id="productName" required type="text" />
-            </div>
-            <div class="Row-Flex-Container">
-                <span style="flex-shrink:0;">product Price:</span>
-                <input id="productPrice" type="number" value="0" style="width:50px; text-align:center" />
-                <span style="flex-shrink:0;">$</span>
+            @* <h3 style="text-align:center; border-bottom: 1px solid white;">Info</h3> *@
+            <div id="infoContainer" class="column-Flex-Container" style="width:100%; align-items:stretch">
+                <div class="Row-Flex-Container">
+                    <span style="flex-shrink:0;">Product Name:</span>
+                    <input id="productName" required type="text" />
+                </div>
+                <div class="Row-Flex-Container">
+                    <span style="flex-shrink:0;">product Price:</span>
+                    <input id="productPrice" type="number" value="0" style="width:50px; text-align:center" />
+                    <span style="flex-shrink:0;">$</span>
 
-                <div style="flex:1"></div>
+                    <div style="flex:1"></div>
 
-                <span style="flex-shrink:0;">Stock:</span>
-                <input id="StockInput" type="number" value="0" style="width:50px; text-align:center" />
+                    <span style="flex-shrink:0;">Stock:</span>
+                    <input id="StockInput" type="number" value="0" style="width:50px; text-align:center" />
+                </div>
+                <span>Description: </span>
+                <textarea id="DescriptionInput" style="height:400px"></textarea>
             </div>
-            <span>Description: </span>
-            <textarea id="DescriptionInput" style="height:400px"></textarea>
         </div>
     </div>
 

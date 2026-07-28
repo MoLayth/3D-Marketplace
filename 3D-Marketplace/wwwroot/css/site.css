@@ -230,6 +230,20 @@ td {
         color: white;
     }
 
+.tabs {
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    -webkit-user-select: none;
+}
+.tab-active{
+    color:white;
+    border-bottom: 1px solid white;
+}
+.tab-inactive {
+    color: gray;    
+    border-bottom: 1px solid transparent;
+}
 .warninglabel {
     background: #cd0006;
     border: 2px solid #900004;

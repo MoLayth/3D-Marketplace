@@ -65,7 +65,10 @@ canvas_removeModelBtn.addEventListener('click', () => {
     model = null;
     render.render(scene, camera)
     updateCanvasUI();
+
     meshsListContainer.innerHTML = '<span style="text-wrap:nowrap; color:red"> No Model Currently loaded</span>';
+    tabsSpace.innerHTML = '';
+    materialSpace.innerHTML = '<span style="text-wrap:nowrap; color:red"> No Model Currently loaded</span>';
 })
 
 const fpxFileInput = document.getElementById("fpxFileInput");
@@ -73,6 +76,9 @@ let _3dModel = null;
 document.getElementById("canvas-upload3dModelBtn").addEventListener('click', () => {
     fpxFileInput.click();
 })
+
+const materialSpace = document.getElementById('materialSpace');
+const tabsSpace = document.getElementById('tabsSpace');
 fpxFileInput.addEventListener('change', (event) => {
     _3dModel = event.target.files[0];
     if (!_3dModel) return;
@@ -91,13 +97,35 @@ fpxFileInput.addEventListener('change', (event) => {
             });
         }
     }
-
     function setupLoadedModel(loadedSceneOrObject) {
         model = loadedSceneOrObject;
 
         meshsListContainer.innerHTML = "";
+        tabsSpace.innerHTML = "";
+        materialSpace.innerHTML = "";
+
+        let tabsName = [];
+        let HTMLMaterailElments = [];
         model.traverse((child) => {
             if (child.isMesh) {
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach((mat) => {
+                            if (!tabsName.includes(mat.name) && mat.name) {
+                                tabsName.push(mat.name);
+                                HTMLMaterailElments.push(creatMaterial(mat.name));
+                            }
+                        });
+                    } else {
+                        if (child.material.name) {
+                            if (!tabsName.includes(child.material.name)) {
+                                tabsName.push(child.material.name);
+                                HTMLMaterailElments.push(creatMaterial(child.material.name));
+                            }
+                        }
+                    }
+                }
+
                 meshsListContainer.appendChild(createToggleButton(child.name, (s) => {
                     handelAssigningOfGlassMetrial(child.name, s);
                 }));
@@ -107,7 +135,13 @@ fpxFileInput.addEventListener('change', (event) => {
                 child.material = modelMaterial;
             }
         });
-        
+
+        for (var i = 0; i < HTMLMaterailElments.length; i++) {
+            materialSpace.appendChild(HTMLMaterailElments[i]);
+        }
+        tabsSpace.appendChild(createTabs(tabsName, HTMLMaterailElments, 'MaterialGroup'));
+
+
         scene.add(model);
         updateCanvasUI();
 
@@ -130,6 +164,157 @@ function handelAssigningOfGlassMetrial(meshName, state) {
     });        
 }
 
+function createTabs(tabsName = [], associatedHTMLContainers = [], groupName) { // tabsName: is the names of the material
+    const tabsContainer = document.createElement('div');
+    tabsContainer.classList.add('Row-Flex-Container');
+    tabsContainer.style.width = '100%';
+
+    let isActive = false;
+    for (var i = 0; i < tabsName.length; i++) {
+        if (i === 0) isActive = true;
+        else isActive = false;
+
+        tabsContainer.appendChild(createTab(tabsName[i], groupName, isActive, associatedHTMLContainers[i]));
+    }
+
+    return tabsContainer;
+}
+function createTab(tabName,groupName, activeByDefault = false, targetElmentContainer = HTMLElement) {
+    const tab = document.createElement('label');
+    tab.textContent = tabName
+    tab.classList.add('tabs');
+
+    if (activeByDefault == false) {
+        tab.classList.add('tab-inactive');
+        targetElmentContainer.style.display = 'none';
+    }
+    else {
+        tab.classList.add('tab-active');
+        targetElmentContainer.style.display = 'flex';
+    }
+
+    tab.group = groupName;
+    tab.targetElment = targetElmentContainer;
+
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tabs').forEach(elemnt => {
+            if (elemnt.group == tab.group) {
+                elemnt.classList.remove('tab-active');
+                elemnt.classList.add('tab-inactive');
+                elemnt.targetElment.style.display = 'none';
+            }
+        })
+        tab.classList.remove('tab-inactive');
+        tab.classList.add('tab-active');
+        tab.targetElment.style.display = 'flex';
+    });
+
+    return tab;
+}
+function creatMaterial(name) {
+    const materialContainer = document.createElement('div');
+    materialContainer.style.width = '100%';
+    materialContainer.classList.add('column-Flex-Container');
+    materialContainer.style.gap = '10px';
+
+    materialContainer.appendChild(createImageField('Base Color'));
+    materialContainer.appendChild(createImageField('Roughness'));
+    materialContainer.appendChild(createImageField('Metallic'));
+    materialContainer.appendChild(createImageField('Normal Map'));
+    materialContainer.appendChild(createImageField('Emission'));
+    materialContainer.appendChild(createImageField('Ambient Occlusion'));
+    //materialContainer.appendChild(createImageField('HDRI'));
+    //materialContainer.appendChild(createImageField('Background'));
+
+    const whiteSpace = document.createElement('div');
+    whiteSpace.style.height = '10px';
+    materialContainer.appendChild(whiteSpace);
+
+    materialContainer.appendChild(createInfoField('Emission Brightness', 'number', 1));
+    materialContainer.appendChild(createInfoField('Emission Color', 'color', '#000000'));
+    materialContainer.appendChild(createInfoField('normalMap Strength', 'number', 1));
+
+    return materialContainer;
+}
+function createImageField(textureName, onFileChange = (file) => { }) {
+    const textureContainer = document.createElement('div');
+    textureContainer.classList.add("Row-Flex-Container");
+    textureContainer.style.width = '100%';
+    textureContainer.style.gap = '10px';
+
+    const label = document.createElement('label');
+    label.textContent = textureName;
+
+    const whiteSpace = document.createElement('div');
+    whiteSpace.style.flex = '2';
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = ".png, .jpg";
+    input.style.display = 'none';
+    input.addEventListener('change', (e) => {
+        const newfile = e.target.files[0];
+
+        if (newfile != null) {
+            onFileChange(newfile);
+            setTextureBtn.src = URL.createObjectURL(newfile);
+            removeTextureBrn.style.display = 'flex';
+        }
+    });
+
+    const removeTextureBrn = document.createElement('img');
+    removeTextureBrn.classList.add("image-btn");
+    removeTextureBrn.style.display = 'none';
+    removeTextureBrn.style.height = '30px';
+    removeTextureBrn.src = '/resources/X.svg';
+    removeTextureBrn.addEventListener('click', () => {
+        onFileChange(null);
+        removeTextureBrn.style.display = 'none';
+        setTextureBtn.src = '/resources/upload.svg';
+    })
+
+    const setTextureBtn = document.createElement('img');
+    setTextureBtn.style.height = '50px';
+    setTextureBtn.classList.add("image-btn");
+    setTextureBtn.src = '/resources/upload.svg';
+    setTextureBtn.addEventListener('click', () => { input.click() });
+
+    textureContainer.appendChild(label);
+    textureContainer.appendChild(whiteSpace);
+    textureContainer.appendChild(input);
+    textureContainer.appendChild(removeTextureBrn);
+    textureContainer.appendChild(setTextureBtn);
+
+    return textureContainer;
+}
+function createInfoField(name, inputType = 'number', defaultValue = 0, onChange = (value) => { }) {
+    const container = document.createElement('div');
+    container.classList.add("Row-Flex-Container")
+    container.style.width = '100%';
+
+    const label = document.createElement('label');
+    label.textContent = name;
+    label.style.textWrap = 'nowrap';
+
+
+    const whiteSpace = document.createElement('div');
+    whiteSpace.style.flex = '2';
+
+    const input = document.createElement('input');
+    input.type = inputType;
+    input.value = defaultValue;
+    input.style.textAlign = 'center';
+    input.style.width = '40px'
+
+    input.addEventListener('change', () => {
+        onchange(input.value);
+    });
+
+    container.appendChild(label)
+    container.appendChild(whiteSpace)
+    container.appendChild(input)
+    return container;
+}
 function createToggleButton(labelText = '', onPress = (bool) => { }) {
     const container = document.createElement('div');
     container.classList.add("Row-Flex-Container")
@@ -247,8 +432,8 @@ function updateTexture(targetMap, texture) {
 const emissionBrightnessInput = document.getElementById('emissionBrightnessInput');
 const emissionColorInput = document.getElementById('emissionColorInput');
 
-emissionBrightnessInput.addEventListener("input", updateEmission);
-emissionColorInput.addEventListener("input", updateEmission);
+//emissionBrightnessInput.addEventListener("input", updateEmission);
+//emissionColorInput.addEventListener("input", updateEmission);
 function updateEmission() {
     const colorHex = emissionColorInput.value;
     const brightness = parseFloat(emissionBrightnessInput.value);
@@ -260,10 +445,10 @@ function updateEmission() {
 
     modelMaterial.needsUpdate = true;
 }
-document.getElementById('normalMapStrengthInput').addEventListener('input', (e) => {
-    const value = parseFloat(e.target.value);
-    modelMaterial.normalScale.set(value, value);
-})
+//document.getElementById('normalMapStrengthInput').addEventListener('input', (e) => {
+//    const value = parseFloat(e.target.value);
+//    modelMaterial.normalScale.set(value, value);
+//})
 
 function resetTextureToDefault(imgBtn, targetMap) {
     switch (targetMap) {
@@ -363,6 +548,10 @@ HDRIBrightnessInput.addEventListener('input', (e) => {
     render.toneMappingExposure = parseFloat(e.target.value);
 });
 
+// creating the header tabs for Texture and Project
+const headerTabsName = ['Texture', 'Project'];
+const headerTabsElment = [document.getElementById('textureContainer'), document.getElementById('infoContainer')]
+document.getElementById('headerTabs').appendChild(createTabs(headerTabsName, headerTabsElment, 'header'));
 
 const productNameInput = document.getElementById('productName');
 const productPriceInput = document.getElementById('productPrice');
