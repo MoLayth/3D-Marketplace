@@ -64,6 +64,10 @@ document.getElementById('SignInBtn').addEventListener('click', async () => {
 });
 
 const tabContainer = document.getElementById('tabElementContainer');
+
+/**
+ * @param {'EditProfile' | 'UploadMode'} tabName
+ */
 async function switchToTab(tabName) {
 
     // check if the user is sign in

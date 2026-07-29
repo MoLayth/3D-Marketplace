@@ -68,75 +68,75 @@ namespace _3D_Marketplace.Controllers {
             string? aoPath = AmbientOcclusion != null ? await SaveFile(safeFolderName, "ao", AmbientOcclusion) : null;
             string? hdriPath = HDRI != null ? await SaveFile(safeFolderName, "hdri", HDRI) : null;
 
-            ProductData? existingProduct = user.products.FirstOrDefault(p => p.Id == productId);
-            if (existingProduct != null) {
+            //ProductData? existingProduct = user.products.FirstOrDefault(p => p.Id == productId);
+            //if (existingProduct != null) {
 
-                existingProduct.Price = (decimal)productPrice;
-                existingProduct.Stock = Stock;
-                existingProduct.Description = Description;
+            //    existingProduct.Price = (decimal)productPrice;
+            //    existingProduct.Stock = Stock;
+            //    existingProduct.Description = Description;
 
-                existingProduct._3dModel = _3dModelPath;
+            //    existingProduct._3dModel = _3dModelPath;
 
-                existingProduct.CameraDefaultZPos = CameraDefaultZPos;
-                existingProduct.ViewDefaultRotation = ViewDefaultRotation;
+            //    existingProduct.CameraDefaultZPos = CameraDefaultZPos;
+            //    existingProduct.ViewDefaultRotation = ViewDefaultRotation;
 
-                // if the user remove an previously assigned text and the texture still exist then delete it except thumbnail
-                if (string.IsNullOrEmpty(baseColorPath)) DeleteFileIfExist(existingProduct.BaseColor);
-                if (string.IsNullOrEmpty(roughnessPath)) DeleteFileIfExist(existingProduct.Roughness);
-                if (string.IsNullOrEmpty(emissionPath)) DeleteFileIfExist(existingProduct.Emission);
-                if (string.IsNullOrEmpty(metallicPath)) DeleteFileIfExist(existingProduct.Metallic);
-                if (string.IsNullOrEmpty(normalPath)) DeleteFileIfExist(existingProduct.NormalMap);
-                if (string.IsNullOrEmpty(aoPath)) DeleteFileIfExist(existingProduct.AmbientOcclusion);
-                if (string.IsNullOrEmpty(hdriPath)) DeleteFileIfExist(existingProduct.HDRI);
+            //    // if the user remove an previously assigned text and the texture still exist then delete it except thumbnail
+            //    if (string.IsNullOrEmpty(baseColorPath)) DeleteFileIfExist(existingProduct.BaseColor);
+            //    if (string.IsNullOrEmpty(roughnessPath)) DeleteFileIfExist(existingProduct.Roughness);
+            //    if (string.IsNullOrEmpty(emissionPath)) DeleteFileIfExist(existingProduct.Emission);
+            //    if (string.IsNullOrEmpty(metallicPath)) DeleteFileIfExist(existingProduct.Metallic);
+            //    if (string.IsNullOrEmpty(normalPath)) DeleteFileIfExist(existingProduct.NormalMap);
+            //    if (string.IsNullOrEmpty(aoPath)) DeleteFileIfExist(existingProduct.AmbientOcclusion);
+            //    if (string.IsNullOrEmpty(hdriPath)) DeleteFileIfExist(existingProduct.HDRI);
 
-                existingProduct.BaseColor = baseColorPath;
-                existingProduct.Roughness = roughnessPath;
-                existingProduct.Emission = emissionPath;
-                existingProduct.Metallic = metallicPath;
-                existingProduct.NormalMap = normalPath;
-                existingProduct.AmbientOcclusion = aoPath;
-                existingProduct.HDRI = hdriPath;
-                existingProduct.Thumbnail = string.IsNullOrEmpty(thumbnailPath) ? existingProduct.Thumbnail : thumbnailPath;
+            //    existingProduct.BaseColor = baseColorPath;
+            //    existingProduct.Roughness = roughnessPath;
+            //    existingProduct.Emission = emissionPath;
+            //    existingProduct.Metallic = metallicPath;
+            //    existingProduct.NormalMap = normalPath;
+            //    existingProduct.AmbientOcclusion = aoPath;
+            //    existingProduct.HDRI = hdriPath;
+            //    existingProduct.Thumbnail = string.IsNullOrEmpty(thumbnailPath) ? existingProduct.Thumbnail : thumbnailPath;
 
-                existingProduct.Emission_Brightness = Emission_Brightness;
-                existingProduct.Emission_Color = Emission_Color;
-                existingProduct.HDRI_Brightness = HDRI_Brightness;
-                existingProduct.isPublished = isPublished;
-                //existingProduct.isOverwrite = true;
-            }
-            else {
-                ProductData product = new ProductData {
-                    SellerId = user.Id,
-                    Seller = user,
-                    Name = ProductName,
-                    Price = (decimal)productPrice,
-                    Stock = Stock,
-                    Description = Description,
+            //    existingProduct.Emission_Brightness = Emission_Brightness;
+            //    existingProduct.Emission_Color = Emission_Color;
+            //    existingProduct.HDRI_Brightness = HDRI_Brightness;
+            //    existingProduct.isPublished = isPublished;
+            //    //existingProduct.isOverwrite = true;
+            //}
+            //else {
+            //    ProductData product = new ProductData {
+            //        SellerId = user.Id,
+            //        Seller = user,
+            //        Name = ProductName,
+            //        Price = (decimal)productPrice,
+            //        Stock = Stock,
+            //        Description = Description,
 
-                    // Texture Paths
-                    _3dModel = _3dModelPath,
-                    Thumbnail = thumbnailPath,
-                    BaseColor = baseColorPath,
-                    Roughness = roughnessPath,
-                    Emission = emissionPath,
-                    Metallic = metallicPath,
-                    NormalMap = normalPath,
-                    AmbientOcclusion = aoPath,
-                    HDRI = hdriPath,
+            //        // Texture Paths
+            //        _3dModel = _3dModelPath,
+            //        Thumbnail = thumbnailPath,
+            //        BaseColor = baseColorPath,
+            //        Roughness = roughnessPath,
+            //        Emission = emissionPath,
+            //        Metallic = metallicPath,
+            //        NormalMap = normalPath,
+            //        AmbientOcclusion = aoPath,
+            //        HDRI = hdriPath,
 
-                    // Settings
-                    Emission_Brightness = Emission_Brightness,
-                    Emission_Color = Emission_Color,
-                    HDRI_Brightness = HDRI_Brightness,
+            //        // Settings
+            //        Emission_Brightness = Emission_Brightness,
+            //        Emission_Color = Emission_Color,
+            //        HDRI_Brightness = HDRI_Brightness,
 
-                    //isOverwrite = true,
-                    isPublished = isPublished,
+            //        //isOverwrite = true,
+            //        isPublished = isPublished,
 
-                    CameraDefaultZPos = CameraDefaultZPos,
-                    ViewDefaultRotation = ViewDefaultRotation,
-                };
-                user.products.Add(product);
-            }
+            //        CameraDefaultZPos = CameraDefaultZPos,
+            //        ViewDefaultRotation = ViewDefaultRotation,
+            //    };
+            //    user.products.Add(product);
+            //}
 
             //await _context.SaveChangesAsync();
             return Ok();

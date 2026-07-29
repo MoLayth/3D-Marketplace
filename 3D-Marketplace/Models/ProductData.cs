@@ -15,27 +15,8 @@ namespace _3D_Marketplace.Models {
         [Column(TypeName = "varchar(500)")]
         public string _3dModel { get; set; }
 
-        [Column(TypeName = "varchar(500)")]
-        public string? BaseColor { get; set; }
+        List<MaterialData> MaterialData { get; set; } = new();
 
-        [Column(TypeName = "varchar(500)")]
-        public string? Roughness { get; set; }
-
-        [Column(TypeName = "varchar(500)")]
-        public string? Metallic { get; set; }
-
-        [Column(TypeName = "varchar(500)")]
-        public string? NormalMap { get; set; }
-
-        [Column(TypeName = "varchar(500)")]
-        public string? Emission { get; set; }
-        public float Emission_Brightness { get; set; }
-
-        [Column(TypeName = "char(7)")]
-        public string Emission_Color { get; set; } = "#000000"; // default to black
-
-        [Column(TypeName = "varchar(500)")]
-        public string? AmbientOcclusion { get; set; }
 
         [Column(TypeName = "varchar(500)")]
         public string Background { get; set; }

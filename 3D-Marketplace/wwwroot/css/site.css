@@ -87,6 +87,9 @@ input::-webkit-inner-spin-button {
 input[type=number] {
     -moz-appearance: textfield;
 }
+input[type=color] {
+    border: 0px;
+}
 
 
 textarea{
@@ -122,13 +125,17 @@ textarea:focus{
     overflow: clip;
 }
 
-.image-btn{
-    height:35px;
-    cursor:pointer;
-    background:#00000000;
+.image-btn {
+    height: 35px;
+    cursor: pointer;
+    background: #00000000;
     transition: .15s ease;
-    padding:5px;
-    border-radius:5px;
+    padding: 5px;
+    border-radius: 5px;
+
+    user-select: none;
+    outline: none;
+    -webkit-user-select: none;
 }
 .image-btn:hover {
     background: #0000006c;
