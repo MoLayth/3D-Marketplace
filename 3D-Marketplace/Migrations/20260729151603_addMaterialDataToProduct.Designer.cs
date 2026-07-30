@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _3D_Marketplace.Models;
 
@@ -10,9 +11,11 @@ using _3D_Marketplace.Models;
 namespace _3D_Marketplace.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260729151603_addMaterialDataToProduct")]
+    partial class addMaterialDataToProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,9 +72,6 @@ namespace _3D_Marketplace.Migrations
 
                     b.Property<string>("Roughness")
                         .HasColumnType("varchar(500)");
-
-                    b.Property<float>("Thickness")
-                        .HasColumnType("real");
 
                     b.Property<bool>("UseDoubleSide")
                         .HasColumnType("bit");
@@ -186,7 +186,7 @@ namespace _3D_Marketplace.Migrations
             modelBuilder.Entity("_3D_Marketplace.Models.MaterialData", b =>
                 {
                     b.HasOne("_3D_Marketplace.Models.ProductData", "Product")
-                        .WithMany("Materials")
+                        .WithMany("MaterialData")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -207,7 +207,7 @@ namespace _3D_Marketplace.Migrations
 
             modelBuilder.Entity("_3D_Marketplace.Models.ProductData", b =>
                 {
-                    b.Navigation("Materials");
+                    b.Navigation("MaterialData");
                 });
 
             modelBuilder.Entity("_3D_Marketplace.Models.UserData", b =>

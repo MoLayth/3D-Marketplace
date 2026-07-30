@@ -15,7 +15,7 @@ namespace _3D_Marketplace.Models {
         [Column(TypeName = "varchar(500)")]
         public string _3dModel { get; set; }
 
-        List<MaterialData> MaterialData { get; set; } = new();
+        public List<MaterialData> Materials { get; set; } = new();
 
 
         [Column(TypeName = "varchar(500)")]

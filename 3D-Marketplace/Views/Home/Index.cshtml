@@ -1,17 +1,11 @@
-﻿<div id="tabElementContainer" style="height:100%">
+﻿@* <div id="tabElementContainer" style="height:100%">
 
-</div>
-@* 
+</div> *@
+
 @{
 	ViewData["Title"] = "Products";
 }
 @model ProductData[]
 
-<div>
-	@for (int i = 0; i < Model.Length; i++) {
-		<div>
-			<img src="#" style="height:50px;" />
-			<label>@Model[i].Name</label>
-		</div>
-	}
-</div> *@
+<div class="Row-Flex-Container" id="storeItem" style="padding:10px;gap:10px"></div>
+<script src="/js/Index.js"></script>

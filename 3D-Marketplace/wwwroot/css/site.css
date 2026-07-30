@@ -142,6 +142,43 @@ textarea:focus{
 }
 
 
+.Store-item-cover-label {
+    position: absolute;
+    left: 50%;
+    bottom: -20px;
+    transform: translateX(-50%);
+    transition:.25s;
+    -webkit-text-stroke: .15px black;
+}
+.Store-item-cover:hover .Store-item-cover-label {
+    bottom: 5px;
+}
+.Store-item-cover {
+    position: relative;
+    /* 
+        the background should be set by javascript or by razor 
+        with it the :
+            background-size: cover;
+            background-position: center;
+    */
+    overflow:clip;
+    height: 200px;
+    width: 200px;
+    border: 1px solid #242424;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: .15s;
+    user-select: none;
+    outline: none;
+    -webkit-user-select: none;
+}
+
+.Store-item-cover:hover {
+    transform: scale(1.05);
+    /* Syntax: offset-x | offset-y | blur-radius | spread-radius | color */
+    box-shadow: -10px 5px 10px 5px rgb(0, 0, 0, 0.30)
+}
+
 .container-option {
     background-color: transparent;
     color: white;

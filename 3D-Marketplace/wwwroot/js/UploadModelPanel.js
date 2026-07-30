@@ -57,7 +57,7 @@ class MaterialInfo {
         this.createDate = Date.now();
         this.modelMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xffffff,
-            roughness: 0.1,
+            roughness: 0.5,
             metalness: 0.1,
             transmission: 0.0,
             thickness: this.#thickness,
@@ -171,6 +171,15 @@ class MaterialInfo {
         this.modelMaterial.thickness = this.#thickness;
         this.modelMaterial.needsUpdate = true;
     }
+
+    getEmissionBrightness() { return this.#emissionBrightness; }
+    getEmissionColor() { return this.#emissionColor; }
+    getAlphaTest() { return this.#alphaTest; }
+    getUseDoubleSide() { return this.#useDoubleSide; }
+    getMakeMaterialTransmission() { return this.#makeMaterialTransmission; }
+    getNormalMapStrength() { return this.#normalMapStrength; }
+    getIOR() { return this.#ior; }
+    getThickness() { return this.#thickness; }
 }
 
 /** @type {MaterialInfo[]} */
@@ -294,24 +303,33 @@ fpxFileInput.addEventListener('change', (event) => {
  * @param {string[]} tabsName
  * @param {HTMLElement[]} associatedHTMLContainers
  * @param {string} groupName
+ * @param {string[]} tabsIds
+ * @returns {HTMLElement}
  */
-function createTabs(tabsName, associatedHTMLContainers, groupName) { // tabsName: is the names of the material
+function createTabs(tabsName, associatedHTMLContainers, groupName,tabsIds = []) { // tabsName: is the names of the material
     const tabsContainer = document.createElement('div');
     tabsContainer.classList.add('Row-Flex-Container');
     tabsContainer.style.width = '100%';
 
-    let isActive = false;
     for (var i = 0; i < tabsName.length; i++) {
-        if (i === 0) isActive = true;
-        else isActive = false;
+        const isActive = i === 0;
 
-        tabsContainer.appendChild(createTab(tabsName[i], groupName, isActive, associatedHTMLContainers[i]));
+        tabsContainer.appendChild(createTab(tabsName[i], groupName, isActive, associatedHTMLContainers[i], tabsIds[i]));
     }
 
     return tabsContainer;
 }
-function createTab(tabName,groupName, activeByDefault = false, targetElmentContainer = HTMLElement) {
+/**
+ * @param {string} tabName
+ * @param {string} groupName
+ * @param {boolean} activeByDefault
+ * @param {HTMLElement} targetElmentContainer
+ * @param {string} tabId
+  */
+function createTab(tabName,groupName, activeByDefault, targetElmentContainer,tabId = '') {
     const tab = document.createElement('label');
+    if (tabId) tab.id = tabId;
+
     tab.textContent = tabName
     tab.classList.add('tabs');
 
@@ -543,8 +561,10 @@ function createToggleButton(labelText, onPress) {
     return container;
 }
 
+let sceneBrightness = 1;
 document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createInfoField('Scene Brightness', 'number', 1, (v) => {
-    render.toneMappingExposure = parseFloat(v);
+    sceneBrightness = parseFloat(v);
+    render.toneMappingExposure = sceneBrightness;
 }));
 
 let BackgroundFile = null;
@@ -590,56 +610,77 @@ function setDefault_Background() {
 // creating the header tabs for Texture and Project
 const headerTabsName = ['Texture', 'Project'];
 const headerTabsElment = [document.getElementById('textureContainer'), document.getElementById('infoContainer')]
-document.getElementById('headerTabs').appendChild(createTabs(headerTabsName, headerTabsElment, 'header'));
+document.getElementById('headerTabs').appendChild(createTabs(headerTabsName, headerTabsElment, 'header', headerTabsName.map(n => n + 'Id')));
 
 const productNameInput = document.getElementById('productName');
 const productPriceInput = document.getElementById('productPrice');
 const StockInput = document.getElementById('StockInput');
 const DescriptionInput = document.getElementById('DescriptionInput');
+const ProjectTab = document.getElementById('ProjectId'); // this well come useful in reportValidity
 // save the project without publishing it
 document.getElementById('canvas-Save').addEventListener('click', async () => {
 
     if (productNameInput.value == "") {
+        ProjectTab.click();
         productNameInput.reportValidity();
         return;
     }
 
-    const formData = new FormData();
+    const productFormData = new FormData();
 
-    document.querySelectorAll('.textureUploadBtn').forEach(element => {
-        const input = document.getElementById(element.getAttribute("data-targetInoutId"));
-        // if file exist
-        if (input && input.files && input.files[0]) {
-            const key = input.getAttribute('data-map').replace('-', '');
-            formData.append(key, input.files[0]);
-        }
-    });
-
-    formData.append("ViewDefaultRotation", JSON.stringify({ x: viewDefaultRotation.x, y: viewDefaultRotation.y }));
-    formData.append("CameraDefaultZPos", cameraDefaultZPos);
+    productFormData.append("ViewDefaultRotation", JSON.stringify({ x: viewDefaultRotation.x, y: viewDefaultRotation.y }));
+    productFormData.append("CameraDefaultZPos", cameraDefaultZPos);
 
     // if this a new project and dont have a thumbnail then just capture one
     if (thumbnaiFile == null && productId < 0) {
         await capturedThumbnail();
     }
 
-    formData.append("_3dMofel", _3dModel);
-    formData.append("Thumbnail", thumbnaiFile, "thumbnail.png");
-    formData.append("productId", productId); // this is varible is set in UploadMpdelPanel.cshtml
-    formData.append("isPublished", isPublished); // this is varible is set in UploadMpdelPanel.cshtml
-    formData.append("Emission_Brightness", parseFloat(emissionBrightnessInput.value));
-    formData.append("Emission_Color", emissionColorInput.value);
-    formData.append("HDRI_Brightness", parseFloat(HDRIBrightnessInput.value));
-    formData.append("ProductName", productNameInput.value);
-    formData.append("productPrice", productPriceInput.value);
-    formData.append("Stock", StockInput.value);
-    formData.append("Description", DescriptionInput.value);
+    productFormData.append("_3dMofel", _3dModel);
+    productFormData.append("Thumbnail", thumbnaiFile, "thumbnail.png");
+    productFormData.append("HDRI", HDRIFile);
+    productFormData.append("Background", BackgroundFile);
+    productFormData.append("productId", productId); // this is varible is set in UploadMpdelPanel.cshtml
+    productFormData.append("isPublished", isPublished); // this is varible is set in UploadMpdelPanel.cshtml
+    productFormData.append("HDRI_Brightness", sceneBrightness);
+    productFormData.append("ProductName", productNameInput.value);
+    productFormData.append("productPrice", productPriceInput.value);
+    productFormData.append("Stock", StockInput.value);
+    productFormData.append("Description", DescriptionInput.value);
 
-    const saveResponse = await fetch('/Home/SaveModel', { method: 'POST', body: formData });
+    const saveResponse = await fetch('/Home/SaveProduct', { method: 'POST', body: productFormData });
 
-    // show the user something to know this success
+    // then save the material after successfully saving the product
     if (saveResponse.ok) {
-        console.log("Ok saved");
+        const productName = await saveResponse.json();
+
+        const materialPromises = modelMaterials.map(mat => {
+            const materialFormData = new FormData();
+            materialFormData.append('productName', productName);
+            materialFormData.append('materialName', mat.name);
+            materialFormData.append('BaseColor', mat.BaseColorFile);
+            materialFormData.append('Roughness', mat.roughnessFile);
+            materialFormData.append('Emission', mat.emissionFile);
+            materialFormData.append('Metallic', mat.metallicFile);
+            materialFormData.append('NormalMap', mat.normalMapFile);
+            materialFormData.append('AmbientOcclusion', mat.aoFile);
+            materialFormData.append('Alpha', mat.alphaFile);
+
+            materialFormData.append('emissionBrightness', mat.getEmissionBrightness());
+            materialFormData.append('emissionColor', mat.getEmissionColor());
+            materialFormData.append('alphaTest', mat.getAlphaTest());
+            materialFormData.append('ior', mat.getIOR());
+            materialFormData.append('thickness', mat.getThickness());
+            materialFormData.append('normalMapStrength', mat.getNormalMapStrength());
+            materialFormData.append('useDoubleSide', mat.getUseDoubleSide());
+            materialFormData.append('makeMaterialTransmission', mat.getMakeMaterialTransmission());
+
+            return fetch('/Home/SaveMaterial', { method: 'POST', body: materialFormData });
+        });
+        await Promise.all(materialPromises);
+    }
+    else {
+        
     }
 });
 

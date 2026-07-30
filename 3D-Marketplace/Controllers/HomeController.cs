@@ -25,6 +25,16 @@ namespace _3D_Marketplace.Controllers {
             return View(_context.products.ToArray());
         }
 
+        [HttpGet]
+        public IActionResult OpenEditProductPage(int productId) {
+            ProductData targetProduct = _context.products.Include(p=>p.Materials).FirstOrDefault(p=>p.Id == productId);
+            return View("UploadModelPanel", targetProduct);
+        }
+
+        public IActionResult GetAllProducts() {
+            return Json(_context.products.ToArray());
+        }
+
         public IActionResult LoadTab_EditProfile() {
             string? username = Request.Cookies["RememberMeUser"];
             return PartialView("EditProfile", model: _context.Users.FirstOrDefault(u => u.UserName == username));
@@ -48,100 +58,136 @@ namespace _3D_Marketplace.Controllers {
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveModel(int productId,bool isPublished, string ViewDefaultRotation, float CameraDefaultZPos,
-                                       IFormFile? Thumbnail, IFormFile _3dMofel,IFormFile? BaseColor, IFormFile? Roughness, IFormFile? Emission,
-                                       IFormFile? Metallic,IFormFile? NormalMap, IFormFile? AmbientOcclusion, IFormFile? HDRI, IFormFile? Background,
-                                       float Emission_Brightness, string Emission_Color,float HDRI_Brightness,
-                                       string ProductName,float productPrice,int Stock, string Description) {
+        public async Task<IActionResult> SaveProduct(
+                                       int productId,bool isPublished, string ViewDefaultRotation, float CameraDefaultZPos,
+                                       IFormFile? Thumbnail, IFormFile _3dMofel, IFormFile? HDRI, IFormFile? Background,
+                                       float Emission_Brightness, float HDRI_Brightness, string ProductName,
+                                       float productPrice,int Stock, string Description) {
 
 
             UserData user = GetUserViaCookies();
-            string safeFolderName = Path.Join("3d-assets", string.Concat(user.UserName.Split(Path.GetInvalidFileNameChars())) , string.Concat(ProductName.Split(Path.GetInvalidFileNameChars())));
+            string safeFolderName = Path.Join("3d-assets",GetSafeStringForPath(user.UserName) ,GetSafeStringForPath(ProductName));
 
             string _3dModelPath = await SaveFile(safeFolderName, "_3dModel", _3dMofel);
             string thumbnailPath = await SaveFile(safeFolderName, "Thumbnail", Thumbnail);
+            string? hdriPath = HDRI != null ? await SaveFile(safeFolderName, "hdri", HDRI) : null;
+            string? backgroundPath = Background != null ? await SaveFile(safeFolderName, "Background", Background) : null;
+
+
+            ProductData? existingProduct = user.products.FirstOrDefault(p => p.Id == productId);
+            if (existingProduct != null) {
+
+                existingProduct.Price = (decimal)productPrice;
+                existingProduct.Stock = Stock;
+                existingProduct.Description = Description;
+
+                existingProduct._3dModel = _3dModelPath;
+
+                existingProduct.CameraDefaultZPos = CameraDefaultZPos;
+                existingProduct.ViewDefaultRotation = ViewDefaultRotation;
+
+                // if the user remove an previously assigned text and the texture still exist then delete it except thumbnail
+                if (string.IsNullOrEmpty(hdriPath)) DeleteFileIfExist(existingProduct.HDRI);
+                if (string.IsNullOrEmpty(backgroundPath)) DeleteFileIfExist(existingProduct.Background);
+
+                existingProduct.HDRI = string.IsNullOrEmpty(hdriPath) ? "/resources/DefaultHDMI.jpg" : hdriPath;
+                existingProduct.Background = string.IsNullOrEmpty(backgroundPath) ? "/resources/DModelBackground.jpg": backgroundPath;
+                existingProduct.Thumbnail = string.IsNullOrEmpty(thumbnailPath) ? existingProduct.Thumbnail : thumbnailPath;
+                existingProduct.isPublished = isPublished;
+            }
+            else {
+                ProductData product = new ProductData {
+                    SellerId = user.Id,
+                    Seller = user,
+                    Name = ProductName,
+                    Price = (decimal)productPrice,
+                    Stock = Stock,
+                    Description = Description,
+
+                    // Texture Paths
+                    _3dModel = _3dModelPath,
+                    Thumbnail = thumbnailPath,
+                    HDRI = string.IsNullOrEmpty(hdriPath) ? "/resources/DefaultHDMI.jpg" : hdriPath,
+                    Background = string.IsNullOrEmpty(backgroundPath) ? "/resources/DModelBackground.jpg" : backgroundPath,
+
+                    isPublished = isPublished,
+                    CameraDefaultZPos = CameraDefaultZPos,
+                    ViewDefaultRotation = ViewDefaultRotation,
+                    HDRI_Brightness = HDRI_Brightness,
+                };
+                user.products.Add(product);
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(ProductName);
+        }
+
+        // this should be run after i create the product
+        [HttpPost]
+        public async Task<IActionResult> SaveMaterial(string productName, string materialName, IFormFile? BaseColor,
+                                                      IFormFile? Roughness, IFormFile? Emission,IFormFile? Metallic,
+                                                      IFormFile? NormalMap, IFormFile? AmbientOcclusion, IFormFile? Alpha,
+                                                      float emissionBrightness,string emissionColor,float alphaTest,float ior,
+                                                      float thickness,float normalMapStrength, bool useDoubleSide,bool makeMaterialTransmission) {
+
+            UserData user = GetUserViaCookies();
+            ProductData product = _context.products.Include(p => p.Materials).FirstOrDefault(p => p.Name == productName);
+            if (product == null || user == null)
+                return BadRequest();
+
+            string safeFolderName = Path.Join("3d-assets", GetSafeStringForPath(user.UserName), GetSafeStringForPath(product.Name),GetSafeStringForPath(materialName));
             string? baseColorPath = BaseColor != null ? await SaveFile(safeFolderName, "baseColor", BaseColor) : null;
             string? roughnessPath = Roughness != null ? await SaveFile(safeFolderName, "roughness", Roughness) : null;
             string? emissionPath = Emission != null ? await SaveFile(safeFolderName, "emission", Emission) : null;
             string? metallicPath = Metallic != null ? await SaveFile(safeFolderName, "metallic", Metallic) : null;
             string? normalPath = NormalMap != null ? await SaveFile(safeFolderName, "normal", NormalMap) : null;
             string? aoPath = AmbientOcclusion != null ? await SaveFile(safeFolderName, "ao", AmbientOcclusion) : null;
-            string? hdriPath = HDRI != null ? await SaveFile(safeFolderName, "hdri", HDRI) : null;
+            string? alphaPath = Alpha != null ? await SaveFile(safeFolderName, "Alpha", Alpha) : null;
 
-            //ProductData? existingProduct = user.products.FirstOrDefault(p => p.Id == productId);
-            //if (existingProduct != null) {
+            MaterialData material = new MaterialData();
 
-            //    existingProduct.Price = (decimal)productPrice;
-            //    existingProduct.Stock = Stock;
-            //    existingProduct.Description = Description;
+            material.Name = materialName;
 
-            //    existingProduct._3dModel = _3dModelPath;
+            material.BaseColor = baseColorPath;
+            material.Roughness = roughnessPath;
+            material.Emission = emissionPath;
+            material.Metallic = metallicPath;
+            material.NormalMap = normalPath;
+            material.AmbientOcclusion = aoPath;
+            material.Alpha = alphaPath;
 
-            //    existingProduct.CameraDefaultZPos = CameraDefaultZPos;
-            //    existingProduct.ViewDefaultRotation = ViewDefaultRotation;
+            material.Emission_Brightness = emissionBrightness;
+            material.Emission_Color = emissionColor;
+            material.alphaTest = alphaTest;
+            material.IOR = ior;
+            material.Thickness = thickness;
+            material.NormalMap_Strength = normalMapStrength;
+            material.UseDoubleSide = useDoubleSide;
+            material.makeMaterialTransmission = makeMaterialTransmission;
 
-            //    // if the user remove an previously assigned text and the texture still exist then delete it except thumbnail
-            //    if (string.IsNullOrEmpty(baseColorPath)) DeleteFileIfExist(existingProduct.BaseColor);
-            //    if (string.IsNullOrEmpty(roughnessPath)) DeleteFileIfExist(existingProduct.Roughness);
-            //    if (string.IsNullOrEmpty(emissionPath)) DeleteFileIfExist(existingProduct.Emission);
-            //    if (string.IsNullOrEmpty(metallicPath)) DeleteFileIfExist(existingProduct.Metallic);
-            //    if (string.IsNullOrEmpty(normalPath)) DeleteFileIfExist(existingProduct.NormalMap);
-            //    if (string.IsNullOrEmpty(aoPath)) DeleteFileIfExist(existingProduct.AmbientOcclusion);
-            //    if (string.IsNullOrEmpty(hdriPath)) DeleteFileIfExist(existingProduct.HDRI);
 
-            //    existingProduct.BaseColor = baseColorPath;
-            //    existingProduct.Roughness = roughnessPath;
-            //    existingProduct.Emission = emissionPath;
-            //    existingProduct.Metallic = metallicPath;
-            //    existingProduct.NormalMap = normalPath;
-            //    existingProduct.AmbientOcclusion = aoPath;
-            //    existingProduct.HDRI = hdriPath;
-            //    existingProduct.Thumbnail = string.IsNullOrEmpty(thumbnailPath) ? existingProduct.Thumbnail : thumbnailPath;
+            MaterialData existingMaterial = product.Materials.FirstOrDefault(x => x.Name == materialName);
+            if (existingMaterial == null) {
+                product.Materials.Add(material);
+            }
+            else {
+                // if the user remove an previously assigned text and the texture still exist then delete it
+                if (string.IsNullOrEmpty(baseColorPath)) DeleteFileIfExist(existingMaterial.BaseColor);
+                if (string.IsNullOrEmpty(roughnessPath)) DeleteFileIfExist(existingMaterial.Roughness);
+                if (string.IsNullOrEmpty(emissionPath)) DeleteFileIfExist(existingMaterial.Emission);
+                if (string.IsNullOrEmpty(metallicPath)) DeleteFileIfExist(existingMaterial.Metallic);
+                if (string.IsNullOrEmpty(normalPath)) DeleteFileIfExist(existingMaterial.NormalMap);
+                if (string.IsNullOrEmpty(aoPath)) DeleteFileIfExist(existingMaterial.AmbientOcclusion);
+                if (string.IsNullOrEmpty(alphaPath)) DeleteFileIfExist(existingMaterial.Alpha);
 
-            //    existingProduct.Emission_Brightness = Emission_Brightness;
-            //    existingProduct.Emission_Color = Emission_Color;
-            //    existingProduct.HDRI_Brightness = HDRI_Brightness;
-            //    existingProduct.isPublished = isPublished;
-            //    //existingProduct.isOverwrite = true;
-            //}
-            //else {
-            //    ProductData product = new ProductData {
-            //        SellerId = user.Id,
-            //        Seller = user,
-            //        Name = ProductName,
-            //        Price = (decimal)productPrice,
-            //        Stock = Stock,
-            //        Description = Description,
-
-            //        // Texture Paths
-            //        _3dModel = _3dModelPath,
-            //        Thumbnail = thumbnailPath,
-            //        BaseColor = baseColorPath,
-            //        Roughness = roughnessPath,
-            //        Emission = emissionPath,
-            //        Metallic = metallicPath,
-            //        NormalMap = normalPath,
-            //        AmbientOcclusion = aoPath,
-            //        HDRI = hdriPath,
-
-            //        // Settings
-            //        Emission_Brightness = Emission_Brightness,
-            //        Emission_Color = Emission_Color,
-            //        HDRI_Brightness = HDRI_Brightness,
-
-            //        //isOverwrite = true,
-            //        isPublished = isPublished,
-
-            //        CameraDefaultZPos = CameraDefaultZPos,
-            //        ViewDefaultRotation = ViewDefaultRotation,
-            //    };
-            //    user.products.Add(product);
-            //}
-
-            //await _context.SaveChangesAsync();
+                existingMaterial.UpdateForm(material);
+            }
+            await _context.SaveChangesAsync();
             return Ok();
         }
-
+        private string GetSafeStringForPath(string value) {
+            return string.Concat(value.Split(Path.GetInvalidFileNameChars()));
+        }
 
         // path is a web Path something like: /resources/folder_name/file_name
         private void DeleteFileIfExist(string? path) {
@@ -149,6 +195,7 @@ namespace _3D_Marketplace.Controllers {
 
             string relativePath = path.Replace('/', Path.DirectorySeparatorChar);
             string physicalPath = Path.Combine(_webHostEnvironment.WebRootPath, relativePath);
+
             if (!System.IO.File.Exists(physicalPath)) return;
 
             System.IO.File.Delete(physicalPath);
