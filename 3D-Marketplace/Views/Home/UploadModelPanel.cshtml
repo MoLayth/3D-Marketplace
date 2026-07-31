@@ -1,8 +1,13 @@
-﻿@{
-    ViewData["Title"] = "Upload";
-    List<string> maps = new() { "Base Color", "Roughness", "Metallic", "Normal-Map", "Emission", "Ambient Occlusion", "HDRI", "Background" };
-}
+﻿@using System.Text.Json
+@using System.Text.Json.Serialization
 @model ProductData?
+
+@{
+    ViewData["Title"] = "Upload";
+    var serializerOptions = new JsonSerializerOptions {
+        ReferenceHandler = ReferenceHandler.IgnoreCycles,
+    };
+}
 
 <div class="Row-Flex-Container" style="height:100%; padding:10px">
     <div style="display:flex; position:relative; width:450px; height: 100%; flex-shrink:0; overflow:auto">
@@ -91,6 +96,8 @@
 </script>
 <script>
         const productId = @(Json.Serialize(Model?.Id ?? -1));
-        const isPublished = @(Json.Serialize(Model?.isPublished ?? false));
+        const isPublished = @Json.Serialize(Model?.isPublished ?? false);
+        const product = @Html.Raw(JsonSerializer.Serialize(Model, serializerOptions));
+        console.log(product);
 </script>
 <script type="module" src="~/js/UploadModelPanel.js?v=@DateTime.Now.Ticks"></script>

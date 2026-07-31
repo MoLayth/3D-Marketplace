@@ -33,14 +33,14 @@ const textureLoader = new THREE.TextureLoader();
 let model = new THREE.Object3D();
 
 class MaterialInfo {
-    BaseColorFile = null;
-    roughnessFile = null;
-    metallicFile = null;
-    normalMapFile = null;
-    emission = null;
-    ambientOcclusionFile = null;
-    alphaFile = null;
-    aoFile = null;
+    BaseColorMap = null;        // <----|
+    roughnessMap = null;        //      |
+    metallicMap = null;         //      |
+    normalMap = null;           //      |<---- ( these all can be a file blob or just string path )
+    emissionMap = null;         //      |
+    ambientOcclusionMap = null; //      |
+    alphaMap = null;            //      |
+    aoMap = null;               // <----|
 
     #emissionBrightness = 1;
     #emissionColor = "#000000";
@@ -58,7 +58,7 @@ class MaterialInfo {
         this.modelMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xffffff,
             roughness: 0.5,
-            metalness: 0.1,
+            metalness: 1, // maybe i need to double check this if it work correctly
             transmission: 0.0,
             thickness: this.#thickness,
             ior: this.#ior,            
@@ -68,14 +68,21 @@ class MaterialInfo {
     }
 
     /**
-     * @param {'map' | 'roughnessMap' | 'metalnessMap' | 'normalMap' | 'emissiveMap' | 'aoMap' | 'alphaMap'} channel 
-     * @param {Blob | File} blobFile
-     */
-    applyTexture(channel, blobFile) {
-        if (blobFile !== null) {
-            const objectUrl = URL.createObjectURL(blobFile);
+    * @param {'map' | 'roughnessMap' | 'metalnessMap' | 'normalMap' | 'emissiveMap' | 'aoMap' | 'alphaMap'} channel 
+    * @param {Blob | File | string} fileOrUrl
+    */
+    applyTexture(channel, fileOrUrl) {
+        if (fileOrUrl !== null && fileOrUrl !== undefined) {
+            let textureUrl = '';
+            let isFile = fileOrUrl instanceof Blob || fileOrUrl instanceof File;
 
-            textureLoader.load(objectUrl, (texture) => {
+            if (isFile) {
+                textureUrl = URL.createObjectURL(fileOrUrl);
+            } else if (typeof fileOrUrl === 'string') {
+                textureUrl = fileOrUrl; // Direct server file path (e.g. "/uploads/mats/color.png")
+            }
+
+            textureLoader.load(textureUrl, (texture) => {
                 if (channel === 'map' || channel === 'emissiveMap') {
                     texture.colorSpace = THREE.SRGBColorSpace;
                 } else {
@@ -86,40 +93,40 @@ class MaterialInfo {
 
                 if (channel === 'alphaMap') {
                     this.modelMaterial.transparent = true;
-                    this.modelMaterial.alphaTest = this.#alphaTest;
-
+                    this.modelMaterial.alphaTest = this.getAlphaTest();
                     this.modelMaterial.depthWrite = true;
                 }
 
-                URL.revokeObjectURL(objectUrl);
+                // Only revoke temporary object URLs created from local Blobs/Files
+                if (isFile) {
+                    URL.revokeObjectURL(textureUrl);
+                }
 
-                // i cant move thess tow line out of the current scop case the textureLoader.load is an async 
-                // and we dont sure where the tetxure well be loaded so we well update the material befor the texture actualy set
-                this.#storeFileReference(channel, blobFile);
+                this.#storeFileReference(channel, fileOrUrl);
                 this.modelMaterial.needsUpdate = true;
             });
         } else {
             this.modelMaterial[channel] = null;
 
             if (channel === 'alphaMap') {
-                this.modelMaterial.transparent = this.#makeMaterialTransmission;
-                this.modelMaterial.alphaTest = this.#alphaTest;
+                this.modelMaterial.transparent = this.getMakeMaterialTransmission();
+                this.modelMaterial.alphaTest = this.getAlphaTest();
             }
 
-            this.#storeFileReference(channel, blobFile);
+            this.#storeFileReference(channel, null);
             this.modelMaterial.needsUpdate = true;
         }
     }
 
     #storeFileReference(channel, file) {
         switch (channel) {
-            case 'map': this.BaseColorFile = file; break;
-            case 'roughnessMap': this.roughnessFile = file; break;
-            case 'metalnessMap': this.metallicFile = file; break;
-            case 'normalMap': this.normalMapFile = file; break;
-            case 'emissiveMap': this.emissionFile = file; break;
-            case 'aoMap': this.ambientOcclusionFile = file; break;
-            case 'alphaMap': this.alphaFile = file; break;
+            case 'map': this.BaseColorMap = file; break;
+            case 'roughnessMap': this.roughnessMap = file; break;
+            case 'metalnessMap': this.metallicMap = file; break;
+            case 'normalMap': this.normalMap = file; break;
+            case 'emissiveMap': this.emissionMap = file; break;
+            case 'aoMap': this.ambientOcclusionMap = file; break;
+            case 'alphaMap': this.alphaMap = file; break;
         }
     }
 
@@ -153,7 +160,7 @@ class MaterialInfo {
             this.modelMaterial.transparent = true;
         } else {
             this.modelMaterial.transmission = 0;
-            this.modelMaterial.transparent = this.alphaFile !== null;
+            this.modelMaterial.transparent = this.alphaMap !== null;
         }
     }
     setNormalMapStrength(v) {
@@ -186,10 +193,6 @@ class MaterialInfo {
 const modelMaterials = []
 
 
-setDefault_HDMI();
-setDefault_Background();
-
-
 model = null;
 
 const canvas_uploadPanel = document.getElementById('canvas-uploadPanel');
@@ -201,9 +204,9 @@ function updateCanvasUI() {
         return;
     }
     canvas_modifyPanel.style.display = "flex";
-    canvas_uploadPanel.style.display = "none"
+    canvas_uploadPanel.style.display = "none";
 }
-updateCanvasUI();
+
 const canvas_removeModelBtn = document.getElementById('canvas-removeModel');
 canvas_removeModelBtn.addEventListener('click', () => {
     scene.remove(model);
@@ -241,64 +244,76 @@ fpxFileInput.addEventListener('change', (event) => {
             });
         }
     }
-    function setupLoadedModel(loadedSceneOrObject) {
-        model = loadedSceneOrObject;
+    reader.readAsArrayBuffer(_3dModel);
+});
 
-        tabsSpace.innerHTML = "";
-        materialSpace.innerHTML = "";
-        modelMaterials.length = 0; // Clear previous materials
+/**
+  * @param {THREE.Object3D} loadedSceneOrObject
+ */
+function setupLoadedModel(loadedSceneOrObject) {
+    model = loadedSceneOrObject;
 
-        const materialMap = new Map(); // Track materials by name to avoid duplicates
-        let tabsName = [];
-        let HTMLMaterialElements = [];
-        model.traverse((child) => {
-            if (child.isMesh) {
-                if (child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material = child.material.map((mat) => processMaterial(mat));
-                    } else {
-                        child.material = processMaterial(child.material);
-                    }
+    tabsSpace.innerHTML = "";
+    materialSpace.innerHTML = "";
+
+    const materialMap = new Map(); // Track materials by name to avoid duplicates
+    let tabsName = [];
+    let HTMLMaterialElements = [];
+
+    // sett all the material if there is any
+    modelMaterials.forEach(mat => {
+        materialMap.set(mat.name, mat);
+        tabsName.push(mat.name);
+        HTMLMaterialElements.push(creatMaterial(mat.name, mat));
+    })
+
+    model.traverse((child) => {
+        if (child.isMesh) {
+            if (child.material) {
+                if (Array.isArray(child.material)) {
+                    child.material = child.material.map((mat) => processMaterial(mat));
+                } else {
+                    child.material = processMaterial(child.material);
                 }
-                child.castShadow = true;
-                child.receiveShadow = true;
             }
-        });
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
 
-        function processMaterial(mat) {
-            if (!mat || !mat.name) return mat;
+    function processMaterial(mat) {
+        if (!mat || !mat.name) return mat;
 
-            // If we already created a MaterialInfo wrapper for this material name, reuse it
-            if (materialMap.has(mat.name)) {
-                return materialMap.get(mat.name).modelMaterial;
-            }
-
-            const customMatInfo = new MaterialInfo(mat.name);
-            materialMap.set(mat.name, customMatInfo);
-            modelMaterials.push(customMatInfo);
-
-            tabsName.push(mat.name);
-            HTMLMaterialElements.push(creatMaterial(mat.name, customMatInfo));
-
-            return customMatInfo.modelMaterial;
+        // If we already created a MaterialInfo wrapper for this material name, reuse it
+        if (materialMap.has(mat.name)) {
+            return materialMap.get(mat.name).modelMaterial;
         }
 
-        for (var i = 0; i < HTMLMaterialElements.length; i++) {
-            materialSpace.appendChild(HTMLMaterialElements[i]);
-        }
-        tabsSpace.appendChild(createTabs(tabsName, HTMLMaterialElements, 'MaterialGroup'));
+        const customMatInfo = new MaterialInfo(mat.name);
+        materialMap.set(mat.name, customMatInfo);
+        modelMaterials.push(customMatInfo);
 
+        tabsName.push(mat.name);
+        HTMLMaterialElements.push(creatMaterial(mat.name, customMatInfo));
 
-        scene.add(model);
-        updateCanvasUI();
-
-        // Clear the file input value so the user can re-upload the same file if they want
-        event.target.value = "";
+        return customMatInfo.modelMaterial;
     }
 
-    reader.readAsArrayBuffer(_3dModel);
+    for (var i = 0; i < HTMLMaterialElements.length; i++) {
+        materialSpace.appendChild(HTMLMaterialElements[i]);
+    }
+    tabsSpace.appendChild(createTabs(tabsName, HTMLMaterialElements, 'MaterialGroup'));
 
-})
+
+    scene.add(model);
+    updateCanvasUI();
+
+    // Clear the file input value so the user can re-upload the same file if they want
+    //if (typeof event !== 'undefined' && event && event.target) {
+    //    event.target.value = "";
+    //}
+}
+
 /**
  * @param {string[]} tabsName
  * @param {HTMLElement[]} associatedHTMLContainers
@@ -370,25 +385,25 @@ function creatMaterial(name,material) {
     materialContainer.classList.add('column-Flex-Container');
     materialContainer.style.gap = '10px';
 
-    materialContainer.appendChild(createImageField('Base Color', (file) => material.applyTexture('map', file)));
-    materialContainer.appendChild(createImageField('Roughness', (file) => material.applyTexture('roughnessMap', file)));
-    materialContainer.appendChild(createImageField('Metallic', (file) => material.applyTexture('metalnessMap', file)));
-    materialContainer.appendChild(createImageField('Normal Map', (file) => material.applyTexture('normalMap', file)));
-    materialContainer.appendChild(createImageField('Emission', (file) => material.applyTexture('emissiveMap', file)));
-    materialContainer.appendChild(createImageField('Ambient Occlusion', (file) => material.applyTexture('aoMap', file)));
-    materialContainer.appendChild(createImageField('Alpha', (file) => material.applyTexture('alphaMap', file)));
+    materialContainer.appendChild(createImageField('Base Color', material.BaseColorMap, (file) => material.applyTexture('map', file)));
+    materialContainer.appendChild(createImageField('Roughness', material.roughnessMap, (file) => material.applyTexture('roughnessMap', file)));
+    materialContainer.appendChild(createImageField('Metallic', material.metallicMap, (file) => material.applyTexture('metalnessMap', file)));
+    materialContainer.appendChild(createImageField('Normal Map', material.normalMap, (file) => material.applyTexture('normalMap', file)));
+    materialContainer.appendChild(createImageField('Emission', material.emissionMap, (file) => material.applyTexture('emissiveMap', file)));
+    materialContainer.appendChild(createImageField('Ambient Occlusion', material.aoMap, (file) => material.applyTexture('aoMap', file)));
+    materialContainer.appendChild(createImageField('Alpha', material.alphaMap, (file) => material.applyTexture('alphaMap', file)));
 
     const whiteSpace = document.createElement('div');
     whiteSpace.style.height = '10px';
     materialContainer.appendChild(whiteSpace);
 
-    materialContainer.appendChild(createInfoField('Normal Map Strength', 'number', 1, (v) => { material.setNormalMapStrength(v); }));
-    materialContainer.appendChild(createInfoField('Emission Brightness', 'number', 1, (v) => { material.setEmissionBrightness(v); }));
-    materialContainer.appendChild(createInfoField('Emission Color', 'color', '#000000', (v) => { material.setEmissionColor(v); }));
-    materialContainer.appendChild(createInfoField('Alpha Test', 'number', 0.5));
-    materialContainer.appendChild(createToggleButton('Use Double Side', (v) => { material.setUseDoubleSide(v); }));
+    materialContainer.appendChild(createInfoField('Normal Map Strength', 'number', material.getNormalMapStrength(), (v) => { material.setNormalMapStrength(v); }));
+    materialContainer.appendChild(createInfoField('Emission Brightness', 'number', material.getEmissionBrightness(), (v) => { material.setEmissionBrightness(v); }));
+    materialContainer.appendChild(createInfoField('Emission Color', 'color', material.getEmissionColor(), (v) => { material.setEmissionColor(v); }));
+    materialContainer.appendChild(createInfoField('Alpha Test', 'number', material.getAlphaTest(), (v) => { material.setAlphaTest(v) }));
+    materialContainer.appendChild(createToggleButton('Use Double Side', material.getUseDoubleSide(), (v) => { material.setUseDoubleSide(v); }));
 
-    materialContainer.appendChild(createToggleButton('Make Material Transmission', (v) => {
+    materialContainer.appendChild(createToggleButton('Make Material Transmission', material.getMakeMaterialTransmission(), (v) => {
         material.setMakeMaterialTransmission(v);
         if (v == true) glassMaterialContainer.style.display = 'flex';
         else glassMaterialContainer.style.display = 'none';
@@ -397,9 +412,9 @@ function creatMaterial(name,material) {
     const glassMaterialContainer = document.createElement('div');
     glassMaterialContainer.style.width = '100%';
     glassMaterialContainer.classList.add('column-Flex-Container');
-    //glassMaterialContainer.appendChild(createInfoField('Transmission', 'number', 1, (v) => {  }));
-    glassMaterialContainer.appendChild(createInfoField('Thickness', 'number', 1.5, (v) => { material.setThickness(v); }));
-    glassMaterialContainer.appendChild(createInfoField('IOR', 'number', 1.5, (v) => { material.setIOR(v); }));
+
+    glassMaterialContainer.appendChild(createInfoField('Thickness', 'number', material.getThickness(), (v) => { material.setThickness(v); }));
+    glassMaterialContainer.appendChild(createInfoField('IOR', 'number', material.getIOR(), (v) => { material.setIOR(v); }));
     glassMaterialContainer.style.display = 'none';
 
     materialContainer.appendChild(glassMaterialContainer);
@@ -409,9 +424,10 @@ function creatMaterial(name,material) {
 
 /**
  * @param {string} textureName
+ * @param {string | null} image
  * @param {function(File|Blob): void} onFileChange
  */ 
-function createImageField(textureName, onFileChange) {
+function createImageField(textureName, image, onFileChange) {
     const textureContainer = document.createElement('div');
     textureContainer.classList.add("Row-Flex-Container");
     textureContainer.style.width = '100%';
@@ -451,7 +467,8 @@ function createImageField(textureName, onFileChange) {
     const setTextureBtn = document.createElement('img');
     setTextureBtn.style.height = '50px';
     setTextureBtn.classList.add("image-btn");
-    setTextureBtn.src = '/resources/upload.svg';
+    setTextureBtn.src = image?? '/resources/upload.svg';
+    
     setTextureBtn.addEventListener('click', () => { input.click() });
 
     textureContainer.appendChild(label);
@@ -501,9 +518,10 @@ function createInfoField(name, inputType, defaultValue = 0, onChange) {
 
 /**
   * @param {string} labelText
+  * @param {boolean} defaultValue
  * @param {function(Boolean): viod} onPress
  */
-function createToggleButton(labelText, onPress) {
+function createToggleButton(labelText, defaultValue = false, onPress) {
     const container = document.createElement('div');
     container.classList.add("Row-Flex-Container")
     container.style.gap = '8px';
@@ -555,6 +573,10 @@ function createToggleButton(labelText, onPress) {
     
     toggleButton.addEventListener('click', toggleHandler);
 
+    if (defaultValue === true) {
+        toggleHandler();
+    }
+
     container.appendChild(label);
     container.appendChild(whiteSpace);
     container.appendChild(toggleButton);
@@ -562,50 +584,59 @@ function createToggleButton(labelText, onPress) {
 }
 
 let sceneBrightness = 1;
-document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createInfoField('Scene Brightness', 'number', 1, (v) => {
+document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createInfoField('Scene Brightness', 'number', product.HDRI_Brightness, (v) => {
     sceneBrightness = parseFloat(v);
     render.toneMappingExposure = sceneBrightness;
 }));
 
+// show onlay the background if its not the defoult
 let BackgroundFile = null;
-document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createImageField('Backgroun', (f) => {
+if (product.background != '/resources/ModelBackground.jpg') {
+    BackgroundFile = product.background;
+}
+document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createImageField('Backgroun', BackgroundFile , (f) => {
     BackgroundFile = f;
     if (BackgroundFile == null) {
         setDefault_Background();
     } else {
-        textureLoader.load(URL.createObjectURL(BackgroundFile), (t) => {
-            t.colorSpace = THREE.SRGBColorSpace;
-            scene.background = t;
-        });
+        applyBackground(URL.createObjectURL(BackgroundFile))
     }
 }));
 
+// show onlay the HDRI if its not the defoult
 let HDRIFile = null;
-document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createImageField('HDRI', (f) => {
+if (product.HDRI != '/resources/DefaultHDMI.jpg') {
+    HDRIFile = product.HDRI;
+}
+document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createImageField('HDRI', HDRIFile, (f) => {
     HDRIFile = f;
     if (HDRIFile == null) {
         setDefault_HDMI();
     } else {
-        textureLoader.load(URL.createObjectURL(HDRIFile), (t) => {
-            t.mapping = THREE.EquirectangularReflectionMapping;
-            t.colorSpace = THREE.SRGBColorSpace;
-            scene.environment = t;
-        });
+        applyHDMITexture(URL.createObjectURL(HDRIFile))
     }
 }));
 
 function setDefault_HDMI() {
-    textureLoader.load('/resources/DefaultHDMI.jpg', (t) => {
+    applyHDMITexture('/resources/DefaultHDMI.jpg');
+}
+function setDefault_Background() {
+    applyBackground('/resources/ModelBackground.jpg');
+}
+function applyHDMITexture(texturePath) {
+    textureLoader.load(texturePath, (t) => {
         t.mapping = THREE.EquirectangularReflectionMapping;
+        t.colorSpace = THREE.SRGBColorSpace;
         scene.environment = t;
     });
 }
-function setDefault_Background() {
-    textureLoader.load('/resources/ModelBackground.jpg', (t) => {
+function applyBackground(backgroundPath) {
+    textureLoader.load(backgroundPath, (t) => {
         t.colorSpace = THREE.SRGBColorSpace;
         scene.background = t;
     });
 }
+
 
 // creating the header tabs for Texture and Project
 const headerTabsName = ['Texture', 'Project'];
@@ -626,56 +657,78 @@ document.getElementById('canvas-Save').addEventListener('click', async () => {
         return;
     }
 
-    const productFormData = new FormData();
+    function appendAsset(formData, assetValue, fileFieldName, pathFieldName) {
+        if (assetValue instanceof File || assetValue instanceof Blob) {
+            formData.append(fileFieldName, assetValue);
+        } else if (typeof assetValue === 'string' && assetValue.length > 0) {
+            formData.append(pathFieldName, assetValue);
+        }
+    }
 
-    productFormData.append("ViewDefaultRotation", JSON.stringify({ x: viewDefaultRotation.x, y: viewDefaultRotation.y }));
-    productFormData.append("CameraDefaultZPos", cameraDefaultZPos);
+    const productFormData = new FormData();
 
     // if this a new project and dont have a thumbnail then just capture one
     if (thumbnaiFile == null && productId < 0) {
         await capturedThumbnail();
     }
 
-    productFormData.append("_3dMofel", _3dModel);
-    productFormData.append("Thumbnail", thumbnaiFile, "thumbnail.png");
-    productFormData.append("HDRI", HDRIFile);
-    productFormData.append("Background", BackgroundFile);
-    productFormData.append("productId", productId); // this is varible is set in UploadMpdelPanel.cshtml
-    productFormData.append("isPublished", isPublished); // this is varible is set in UploadMpdelPanel.cshtml
-    productFormData.append("HDRI_Brightness", sceneBrightness);
+    appendAsset(productFormData, _3dModel, "ModelFile", "ModelPath");
+    appendAsset(productFormData, thumbnailFile, "ThumbnailFile", "ThumbnailPath");
+    appendAsset(productFormData, HDRIFile, "HdriFile", "HdriPath");
+    appendAsset(productFormData, BackgroundFile, "BackgroundFile", "BackgroundPath");
+
+    // Append Scalars & Form Inputs
+    productFormData.append("productId", productId);
+    productFormData.append("isPublished", isPublished);
+    productFormData.append("ViewDefaultRotation", JSON.stringify({ x: viewDefaultRotation.x, y: viewDefaultRotation.y }));
+    productFormData.append("CameraDefaultZPos", cameraDefaultZPos);
+    productFormData.append("HdriBrightness", sceneBrightness);
+
     productFormData.append("ProductName", productNameInput.value);
     productFormData.append("productPrice", productPriceInput.value);
     productFormData.append("Stock", StockInput.value);
     productFormData.append("Description", DescriptionInput.value);
 
-    const saveResponse = await fetch('/Home/SaveProduct', { method: 'POST', body: productFormData });
+    const saveResponse = await fetch('/Home/SaveProduct', {
+        method: 'POST',
+        body: productFormData
+    });
 
     // then save the material after successfully saving the product
     if (saveResponse.ok) {
         const productName = await saveResponse.json();
 
         const materialPromises = modelMaterials.map(mat => {
-            const materialFormData = new FormData();
-            materialFormData.append('productName', productName);
-            materialFormData.append('materialName', mat.name);
-            materialFormData.append('BaseColor', mat.BaseColorFile);
-            materialFormData.append('Roughness', mat.roughnessFile);
-            materialFormData.append('Emission', mat.emissionFile);
-            materialFormData.append('Metallic', mat.metallicFile);
-            materialFormData.append('NormalMap', mat.normalMapFile);
-            materialFormData.append('AmbientOcclusion', mat.aoFile);
-            materialFormData.append('Alpha', mat.alphaFile);
+            function appendTextureToForm(formData, fileOrPath, fileFieldName, pathFieldName) {
+                if (fileOrPath instanceof File || fileOrPath instanceof Blob) {
+                    formData.append(fileFieldName, fileOrPath); // Upload new binary file
+                } else if (typeof fileOrPath === 'string') {
+                    formData.append(pathFieldName, fileOrPath); // Send existing web path string
+                }
+            }
 
-            materialFormData.append('emissionBrightness', mat.getEmissionBrightness());
-            materialFormData.append('emissionColor', mat.getEmissionColor());
-            materialFormData.append('alphaTest', mat.getAlphaTest());
-            materialFormData.append('ior', mat.getIOR());
-            materialFormData.append('thickness', mat.getThickness());
-            materialFormData.append('normalMapStrength', mat.getNormalMapStrength());
-            materialFormData.append('useDoubleSide', mat.getUseDoubleSide());
-            materialFormData.append('makeMaterialTransmission', mat.getMakeMaterialTransmission());
+            const formData = new FormData();
+            formData.append('ProductName', productName);
+            formData.append('MaterialName', mat.name);
 
-            return fetch('/Home/SaveMaterial', { method: 'POST', body: materialFormData });
+            appendTextureToForm(formData, mat.BaseColorMap, 'BaseColorFile', 'BaseColorPath');
+            appendTextureToForm(formData, mat.roughnessMap, 'RoughnessFile', 'RoughnessPath');
+            appendTextureToForm(formData, mat.metallicMap, 'MetallicFile', 'MetallicPath');
+            appendTextureToForm(formData, mat.normalMap, 'NormalMapFile', 'NormalMapPath');
+            appendTextureToForm(formData, mat.emissionFile, 'EmissionFile', 'EmissionPath');
+            appendTextureToForm(formData, mat.aoMap, 'AmbientOcclusionFile', 'AmbientOcclusionPath');
+            appendTextureToForm(formData, mat.alphaMap, 'AlphaFile', 'AlphaPath');
+
+            formData.append('EmissionBrightness', mat.getEmissionBrightness());
+            formData.append('EmissionColor', mat.getEmissionColor());
+            formData.append('AlphaTest', mat.getAlphaTest());
+            formData.append('Ior', mat.getIOR());
+            formData.append('Thickness', mat.getThickness());
+            formData.append('NormalMapStrength', mat.getNormalMapStrength());
+            formData.append('UseDoubleSide', mat.getUseDoubleSide());
+            formData.append('MakeMaterialTransmission', mat.getMakeMaterialTransmission());
+
+            return fetch('/Home/SaveMaterial', { method: 'POST', body: formData });
         });
         await Promise.all(materialPromises);
     }
@@ -752,7 +805,7 @@ function animate(timestamp) {
     render.render(scene, camera);
 
 }
-animate();
+
 
 // update when trying to resize the window
 window.addEventListener('resize', () => {
@@ -793,3 +846,87 @@ document.getElementById("canvas-resetViewButton").addEventListener('click', () =
     camera.position.z = cameraDefaultZPos;
     model.rotation.z = viewDefaultRotation.y;
 });
+
+// this should have all the function and ui data manipulation that need to run when the pag load
+function start() {
+    if (productId <= 0 || !product) {
+        setDefault_HDMI();
+        setDefault_Background();
+    } else {
+        // Clear existing materials array to prevent duplicate push issues
+        modelMaterials.length = 0;
+
+        const rawMaterials = product.materials || product.Materials;
+
+        if (rawMaterials && Array.isArray(rawMaterials)) {
+            rawMaterials.forEach(mat => {
+                const matName = mat.name || mat.Name;
+                const matInfo = new MaterialInfo(matName);
+
+                // Populate Material numerical properties safely
+                matInfo.setNormalMapStrength(mat.normalMap_Strength ?? mat.NormalMap_Strength ?? 1);
+                matInfo.setEmissionBrightness(mat.emission_Brightness ?? mat.Emission_Brightness ?? 0);
+                matInfo.setEmissionColor(mat.emission_Color ?? mat.Emission_Color ?? "#000000");
+                matInfo.setAlphaTest(mat.alphaTest ?? 0.5);
+                matInfo.setUseDoubleSide(mat.useDoubleSide ?? mat.UseDoubleSide ?? false);
+                matInfo.setMakeMaterialTransmission(mat.makeMaterialTransmission ?? mat.MakeMaterialTransmission ?? false);
+                matInfo.setIOR(mat.ior ?? mat.IOR ?? 1.5);
+                matInfo.setThickness(mat.thickness ?? mat.Thickness ?? 0);
+
+                // Apply Textures (checking PascalCase DB fields first)
+                const baseColor = mat.BaseColor || mat.baseColor;
+                if (baseColor) matInfo.applyTexture('map', baseColor);
+
+                const roughness = mat.Roughness || mat.roughness;
+                if (roughness) matInfo.applyTexture('roughnessMap', roughness);
+
+                const metallic = mat.Metallic || mat.metallic;
+                if (metallic) matInfo.applyTexture('metalnessMap', metallic);
+
+                const normalMap = mat.NormalMap || mat.normalMap;
+                if (normalMap) matInfo.applyTexture('normalMap', normalMap); // Fixed channel typo
+
+                const emission = mat.Emission || mat.emission;
+                if (emission) matInfo.applyTexture('emissiveMap', emission);
+
+                const ao = mat.AmbientOcclusion || mat.ambientOcclusion;
+                if (ao) matInfo.applyTexture('aoMap', ao);
+
+                const alpha = mat.Alpha || mat.alpha;
+                if (alpha) matInfo.applyTexture('alphaMap', alpha);
+
+                modelMaterials.push(matInfo);
+            });
+        }
+
+        if (product.HDRI) {
+            applyHDMITexture(product.HDRI);
+        }
+        if (product.Background) {
+            applyBackground(product.Background);
+        }
+
+        const rotationObj = JSON.parse(product.ViewDefaultRotation);
+        viewDefaultRotation.x = rotationObj.x;
+        viewDefaultRotation.y = rotationObj.y;
+
+        cameraDefaultZPos = product.CameraDefaultZPos;
+
+        productName.value = product.Name;
+
+        // Load 3D Model
+        const modelPath = product._3dModel || product.ModelPath;
+        if (modelPath && modelPath.endsWith('.fbx')) {
+            const loader = new FBXLoader();
+            loader.load(modelPath, (fbx) => {
+                setupLoadedModel(fbx);
+            });
+        } else if (modelPath) {
+            // GLTF/GLB loader logic goes here
+        }
+    }
+
+    updateCanvasUI();
+    animate();
+}
+start();
