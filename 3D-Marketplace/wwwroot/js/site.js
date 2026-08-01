@@ -66,7 +66,7 @@ document.getElementById('SignInBtn').addEventListener('click', async () => {
 const tabContainer = document.getElementById('tabElementContainer');
 
 /**
- * @param {'EditProfile' | 'UploadMode'} tabName
+ * @param {'EditProfile' | 'UploadMode' | 'StoreItems'} tabName
  */
 async function switchToTab(tabName) {
 

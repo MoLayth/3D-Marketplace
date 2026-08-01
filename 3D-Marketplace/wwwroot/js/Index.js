@@ -1,4 +1,6 @@
-﻿const storeItem = document.getElementById('storeItem');
+﻿import { SetThe3dScene } from './3dView.js';
+
+const storeItem = document.getElementById('storeItem');
 async function setUp() {
     const response = await fetch('/Home/GetAllProducts');
     const products = await response.json();
@@ -29,9 +31,7 @@ function createStoreItem(name, imagePath, productId) {
     div.appendChild(label)
 
     div.addEventListener('click', async (e) => {
-        const id = e.currentTarget.dataset.productId;
-
-        window.location.href = `/Home/OpenEditProductPage?productId=${id}`;
+        SetThe3dScene
     })
 
     return div;

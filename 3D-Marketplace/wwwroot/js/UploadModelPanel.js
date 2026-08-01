@@ -32,7 +32,7 @@ const textureLoader = new THREE.TextureLoader();
 
 let model = new THREE.Object3D();
 
-class MaterialInfo {
+export class MaterialInfo {
     BaseColorMap = null;        // <----|
     roughnessMap = null;        //      |
     metallicMap = null;         //      |
@@ -57,7 +57,7 @@ class MaterialInfo {
         this.createDate = Date.now();
         this.modelMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xffffff,
-            roughness: 0.5,
+            roughness: 1,
             metalness: 1, // maybe i need to double check this if it work correctly
             transmission: 0.0,
             thickness: this.#thickness,
@@ -584,14 +584,14 @@ function createToggleButton(labelText, defaultValue = false, onPress) {
 }
 
 let sceneBrightness = 1;
-document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createInfoField('Scene Brightness', 'number', product.HDRI_Brightness, (v) => {
+document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createInfoField('Scene Brightness', 'number', product?.HDRI_Brightness ?? 1, (v) => {
     sceneBrightness = parseFloat(v);
     render.toneMappingExposure = sceneBrightness;
 }));
 
 // show onlay the background if its not the defoult
 let BackgroundFile = null;
-if (product.background != '/resources/ModelBackground.jpg') {
+if (product &&  product.background != '/resources/ModelBackground.jpg') {
     BackgroundFile = product.background;
 }
 document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createImageField('Backgroun', BackgroundFile , (f) => {
@@ -605,7 +605,7 @@ document.getElementById('infoContainer').insertAdjacentElement('afterbegin', cre
 
 // show onlay the HDRI if its not the defoult
 let HDRIFile = null;
-if (product.HDRI != '/resources/DefaultHDMI.jpg') {
+if (product && product.HDRI != '/resources/DefaultHDMI.jpg') {
     HDRIFile = product.HDRI;
 }
 document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createImageField('HDRI', HDRIFile, (f) => {
@@ -673,7 +673,7 @@ document.getElementById('canvas-Save').addEventListener('click', async () => {
     }
 
     appendAsset(productFormData, _3dModel, "ModelFile", "ModelPath");
-    appendAsset(productFormData, thumbnailFile, "ThumbnailFile", "ThumbnailPath");
+    appendAsset(productFormData, thumbnaiFile, "ThumbnailFile", "ThumbnailPath");
     appendAsset(productFormData, HDRIFile, "HdriFile", "HdriPath");
     appendAsset(productFormData, BackgroundFile, "BackgroundFile", "BackgroundPath");
 
@@ -840,12 +840,16 @@ render.domElement.addEventListener('contextmenu', (e) => {
 });
 
 document.getElementById("canvas-resetViewButton").addEventListener('click', () => {
+    resetView();
+});
+
+function resetView() {
     if (!model) return;
 
     cameraParent.rotation.x = viewDefaultRotation.x;
     camera.position.z = cameraDefaultZPos;
     model.rotation.z = viewDefaultRotation.y;
-});
+}
 
 // this should have all the function and ui data manipulation that need to run when the pag load
 function start() {
@@ -860,51 +864,33 @@ function start() {
 
         if (rawMaterials && Array.isArray(rawMaterials)) {
             rawMaterials.forEach(mat => {
-                const matName = mat.name || mat.Name;
-                const matInfo = new MaterialInfo(matName);
+                const matInfo = new MaterialInfo(mat.Name);
 
                 // Populate Material numerical properties safely
-                matInfo.setNormalMapStrength(mat.normalMap_Strength ?? mat.NormalMap_Strength ?? 1);
-                matInfo.setEmissionBrightness(mat.emission_Brightness ?? mat.Emission_Brightness ?? 0);
-                matInfo.setEmissionColor(mat.emission_Color ?? mat.Emission_Color ?? "#000000");
-                matInfo.setAlphaTest(mat.alphaTest ?? 0.5);
-                matInfo.setUseDoubleSide(mat.useDoubleSide ?? mat.UseDoubleSide ?? false);
-                matInfo.setMakeMaterialTransmission(mat.makeMaterialTransmission ?? mat.MakeMaterialTransmission ?? false);
-                matInfo.setIOR(mat.ior ?? mat.IOR ?? 1.5);
-                matInfo.setThickness(mat.thickness ?? mat.Thickness ?? 0);
+                matInfo.setNormalMapStrength(mat.NormalMap_Strength);
+                matInfo.setEmissionBrightness(mat.Emission_Brightness);
+                matInfo.setEmissionColor(mat.Emission_Color);
+                matInfo.setAlphaTest(mat.alphaTest);
+                matInfo.setUseDoubleSide(mat.UseDoubleSide);
+                matInfo.setMakeMaterialTransmission(mat.MakeMaterialTransmission);
+                matInfo.setIOR(mat.IOR);
+                matInfo.setThickness(mat.Thickness);
 
-                // Apply Textures (checking PascalCase DB fields first)
-                const baseColor = mat.BaseColor || mat.baseColor;
-                if (baseColor) matInfo.applyTexture('map', baseColor);
-
-                const roughness = mat.Roughness || mat.roughness;
-                if (roughness) matInfo.applyTexture('roughnessMap', roughness);
-
-                const metallic = mat.Metallic || mat.metallic;
-                if (metallic) matInfo.applyTexture('metalnessMap', metallic);
-
-                const normalMap = mat.NormalMap || mat.normalMap;
-                if (normalMap) matInfo.applyTexture('normalMap', normalMap); // Fixed channel typo
-
-                const emission = mat.Emission || mat.emission;
-                if (emission) matInfo.applyTexture('emissiveMap', emission);
-
-                const ao = mat.AmbientOcclusion || mat.ambientOcclusion;
-                if (ao) matInfo.applyTexture('aoMap', ao);
-
-                const alpha = mat.Alpha || mat.alpha;
-                if (alpha) matInfo.applyTexture('alphaMap', alpha);
+                // Apply Textures
+                if (mat.BaseColor) matInfo.applyTexture('map', mat.BaseColor);
+                if (mat.Roughness) matInfo.applyTexture('roughnessMap', mat.Roughness);
+                if (mat.Metallic) matInfo.applyTexture('metalnessMap', mat.Metallic);
+                if (mat.NormalMap) matInfo.applyTexture('normalMap', mat.NormalMap);
+                if (mat.Emission) matInfo.applyTexture('emissiveMap', mat.Emission);
+                if (mat.AmbientOcclusion) matInfo.applyTexture('aoMap', mat.AmbientOcclusion);
+                if (mat.Alpha) matInfo.applyTexture('alphaMap', mat.Alpha);
 
                 modelMaterials.push(matInfo);
             });
         }
 
-        if (product.HDRI) {
-            applyHDMITexture(product.HDRI);
-        }
-        if (product.Background) {
-            applyBackground(product.Background);
-        }
+        if (product.HDRI) applyHDMITexture(product.HDRI);
+        if (product.Background) applyBackground(product.Background);
 
         const rotationObj = JSON.parse(product.ViewDefaultRotation);
         viewDefaultRotation.x = rotationObj.x;
@@ -912,10 +898,14 @@ function start() {
 
         cameraDefaultZPos = product.CameraDefaultZPos;
 
+        // apply project setting
         productName.value = product.Name;
+        productPriceInput.value = product.Price;
+        StockInput.value = product.Stock;
+        DescriptionInput.value = product.Description;
 
-        // Load 3D Model
-        const modelPath = product._3dModel || product.ModelPath;
+        _3dModel = product._3dModel;
+        const modelPath = product._3dModel;
         if (modelPath && modelPath.endsWith('.fbx')) {
             const loader = new FBXLoader();
             loader.load(modelPath, (fbx) => {

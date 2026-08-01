@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <Folder Include="Migrations\" />
-    <Folder Include="wwwroot\resources\3d-assets\%40BD_Furniture\" />
     <Folder Include="wwwroot\resources\userPic\" />
   </ItemGroup>
 

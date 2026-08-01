@@ -83,77 +83,58 @@ namespace _3D_Marketplace.Controllers {
             public string? Description { get; set; }
         }
         [HttpPost]
-        public async Task<IActionResult> SaveProduct([FromForm] ProductUploadDto dto) {
+            public async Task<IActionResult> SaveProduct([FromForm] ProductUploadDto dto) {
+                UserData user = GetUserViaCookies();
+                if (user == null) return Unauthorized();
 
-            UserData user = GetUserViaCookies();
-            if (user == null) return Unauthorized();
+                    var existingProduct = user.products.FirstOrDefault(p => p.Id == dto.ProductId);
+                ProductData Product = existingProduct ?? new ProductData();
+                string safeFolderName = Path.Join("3d-assets",GetSafeStringForPath(user.UserName) ,GetSafeStringForPath(Product.Folder));
 
-            string safeFolderName = Path.Join("3d-assets",GetSafeStringForPath(user.UserName) ,GetSafeStringForPath(dto.ProductName));
-
-            async Task<string?> ResolveAssetPath(IFormFile? fileUpload, string? existingPath, string filePrefix) {
-                if (fileUpload != null && fileUpload.Length > 0) {
-                    return await SaveFile(safeFolderName, filePrefix, fileUpload);
+                async Task<string?> ResolveAssetPath(IFormFile? fileUpload, string? existingPath, string filePrefix,string fileExtension = "") {
+                    if (fileUpload != null && fileUpload.Length > 0) {
+                        return await SaveFile(safeFolderName, filePrefix, fileUpload,fileExtension);
+                    }
+                    return existingPath; // Keeps existing path string if no new file uploaded
                 }
-                return existingPath; // Keeps existing path string if no new file uploaded
-            }
 
-            string? modelPath = await ResolveAssetPath(dto.ModelFile, dto.ModelPath, "_3dModel");
-            string? thumbnailPath = await ResolveAssetPath(dto.ThumbnailFile, dto.ThumbnailPath, "Thumbnail");
-            string? hdriPath = await ResolveAssetPath(dto.HdriFile, dto.HdriPath, "hdri");
-            string? backgroundPath = await ResolveAssetPath(dto.BackgroundFile, dto.BackgroundPath, "Background");
+                string modelPath = await ResolveAssetPath(dto.ModelFile, dto.ModelPath, "_3dModel");
+                string? thumbnailPath = await ResolveAssetPath(dto.ThumbnailFile, dto.ThumbnailPath, "Thumbnail",".png");
+                string? hdriPath = await ResolveAssetPath(dto.HdriFile, dto.HdriPath, "hdri");
+                string? backgroundPath = await ResolveAssetPath(dto.BackgroundFile, dto.BackgroundPath, "Background");
 
+                Product.Name = dto.ProductName;
+                Product.Price = dto.ProductPrice;
+                Product.Stock = dto.Stock;
+                Product.Description = dto.Description;
+                Product.isPublished = dto.IsPublished;
+                Product.CameraDefaultZPos = dto.CameraDefaultZPos;
+                Product.ViewDefaultRotation = dto.ViewDefaultRotation;
+                Product.HDRI_Brightness = dto.HdriBrightness;
+           
+                if (!string.IsNullOrEmpty(thumbnailPath)) Product.Thumbnail = thumbnailPath;
+                Product._3dModel = modelPath;   
 
-            ProductData? existingProduct = user.products.FirstOrDefault(p => p.Id == dto.ProductId);
-            if (existingProduct != null) {
+                if (existingProduct != null) {
+                    if (string.IsNullOrEmpty(hdriPath) && !Product.HDRI.Contains("DefaultHDMI"))
+                        DeleteFileIfExist(Product.HDRI);
 
-                existingProduct.Name = dto.ProductName;
-                existingProduct.Price = dto.ProductPrice;
-                existingProduct.Stock = dto.Stock;
-                existingProduct.Description = dto.Description;
-                existingProduct.isPublished = dto.IsPublished;
-                existingProduct.CameraDefaultZPos = dto.CameraDefaultZPos;
-                existingProduct.ViewDefaultRotation = dto.ViewDefaultRotation;
-                existingProduct.HDRI_Brightness = dto.HdriBrightness;
+                    if (string.IsNullOrEmpty(backgroundPath) && !Product.Background.Contains("ModelBackground"))
+                        DeleteFileIfExist(Product.Background);
+                }
+                else {
+                    Product.SellerId = user.Id;
+                    Product.Seller = user;
 
-                // Update 3D Model & Thumbnail only if a path or file was supplied
-                if (!string.IsNullOrEmpty(modelPath)) existingProduct._3dModel = modelPath;
-                if (!string.IsNullOrEmpty(thumbnailPath)) existingProduct.Thumbnail = thumbnailPath;
+                    user.products.Add(Product);
+                }
 
-                if (string.IsNullOrEmpty(hdriPath) && !string.IsNullOrEmpty(existingProduct.HDRI) && !existingProduct.HDRI.Contains("DefaultHDMI"))
-                    DeleteFileIfExist(existingProduct.HDRI);
+                Product.HDRI = string.IsNullOrEmpty(hdriPath) ? "/resources/DefaultHDMI.jpg" : hdriPath;
+                Product.Background = string.IsNullOrEmpty(backgroundPath) ? "/resources/ModelBackground.jpg" : backgroundPath;
 
-                if (string.IsNullOrEmpty(backgroundPath) && !string.IsNullOrEmpty(existingProduct.Background) && !existingProduct.Background.Contains("DModelBackground"))
-                    DeleteFileIfExist(existingProduct.Background);
-
-                existingProduct.HDRI = string.IsNullOrEmpty(hdriPath) ? "/resources/DefaultHDMI.jpg" : hdriPath;
-                existingProduct.Background = string.IsNullOrEmpty(backgroundPath) ? "/resources/DModelBackground.jpg" : backgroundPath;
-            }
-            else {
-                ProductData newProduct = new ProductData {
-                    SellerId = user.Id,
-                    Seller = user,
-                    Name = dto.ProductName,
-                    Price = dto.ProductPrice,
-                    Stock = dto.Stock,
-                    Description = dto.Description,
-
-                    _3dModel = modelPath ?? string.Empty,
-                    Thumbnail = thumbnailPath ?? string.Empty,
-                    HDRI = string.IsNullOrEmpty(hdriPath) ? "/resources/DefaultHDMI.jpg" : hdriPath,
-                    Background = string.IsNullOrEmpty(backgroundPath) ? "/resources/DModelBackground.jpg" : backgroundPath,
-
-                    isPublished = dto.IsPublished,
-                    CameraDefaultZPos = dto.CameraDefaultZPos,
-                    ViewDefaultRotation = dto.ViewDefaultRotation,
-                    HDRI_Brightness = dto.HdriBrightness,
-                };
-
-                user.products.Add(newProduct);
-            }
-
-            await _context.SaveChangesAsync();
-            return Json(dto.ProductName);
-        }
+                await _context.SaveChangesAsync();
+                return Json(dto.ProductName);
+            }   
         public class MaterialUploadDto {
             public string ProductName { get; set; }
             public string MaterialName { get; set; }
@@ -192,14 +173,14 @@ namespace _3D_Marketplace.Controllers {
         }
         // this should be run after i create the product
         [HttpPost]
-        public async Task<IActionResult> SaveMaterial([FromBody] MaterialUploadDto dto) {
+        public async Task<IActionResult> SaveMaterial([FromForm] MaterialUploadDto dto) {
 
             UserData user = GetUserViaCookies();
             ProductData product = _context.products.Include(p => p.Materials).FirstOrDefault(p => p.Name == dto.ProductName);
             if (product == null || user == null)
                 return BadRequest();
 
-            string safeFolderName = Path.Join("3d-assets", GetSafeStringForPath(user.UserName), GetSafeStringForPath(product.Name),GetSafeStringForPath(dto.MaterialName));
+            string safeFolderName = Path.Join("3d-assets", GetSafeStringForPath(user.UserName), GetSafeStringForPath(product.Folder),GetSafeStringForPath(dto.MaterialName) + "_Material");
 
             async Task<string?> ResolveTexturePath(IFormFile? fileUpload, string? existingPath, string filePrefix) {
                 if (fileUpload != null && fileUpload.Length > 0) {
@@ -270,7 +251,16 @@ namespace _3D_Marketplace.Controllers {
 
             System.IO.File.Delete(physicalPath);
         }
-        private async Task<string> SaveFile(string folderName,string fileName,IFormFile file) {
+
+        /// <summary>
+        /// this function well save any kind of file to a physical path
+        /// </summary>
+        /// <param name="folderName"></param>
+        /// <param name="fileName"></param>
+        /// <param name="file"></param>
+        /// <param name="extension"> extension optional if the file dos'nt have one this well be applied for example ".png" </param>
+        /// <returns></returns>
+        private async Task<string> SaveFile(string folderName,string fileName,IFormFile file,string extension = "") {
             string fileExtension = Path.GetExtension(file.FileName);
 
             string dir = Path.Join(_webHostEnvironment.WebRootPath, "resources", folderName);
@@ -278,6 +268,7 @@ namespace _3D_Marketplace.Controllers {
                 Directory.CreateDirectory(dir);
             }
 
+            if (string.IsNullOrEmpty(fileExtension)) fileExtension = extension;
             string savePath = Path.Join(dir, fileName + fileExtension);
             
             using (var stream = new FileStream(savePath, FileMode.Create)) {

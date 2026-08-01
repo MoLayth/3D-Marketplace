@@ -107,6 +107,10 @@ namespace _3D_Marketplace.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("varchar(3500)");
 
+                    b.Property<string>("Folder")
+                        .IsRequired()
+                        .HasColumnType("varchar(36)");
+
                     b.Property<string>("HDRI")
                         .IsRequired()
                         .HasColumnType("varchar(500)");

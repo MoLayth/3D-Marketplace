@@ -1,6 +1,9 @@
-﻿import * as THREE from 'three';
+﻿//*********** thi sscript just need a dive with id of canvas to work correctlat ***********\\
+
+import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { MaterialInfo } from './UploadModelPanel.js';
 
 const scene = new THREE.Scene(); // Set up the scene
 
@@ -30,11 +33,45 @@ function animate(timestamp) {
     render.render(scene, camera);
 }
 
-function setUp() {
+/**
+ * @param {string} _3dModelPath
+ * @param {MaterialInfo[]} materialsInfo
+ */
+export function SetThe3dScene(_3dModelPath, materialsInfo) {
+    const materialMap = new Map();
     // here get the model path and the texture and all the nedded data
+    materialsInfo.forEach((material) => {
+        materialMap.set(material.name, material);
+        
+    })
+
+    if (_3dModelPath.endsWith('.fbx')) {
+        const loader = new FBXLoader();
+        loader.load(_3dModelPath, (fbx) => {
+            setupLoadedModel(fbx);
+        });
+    } else {
+        // GLTF/GLB loader logic goes here
+    }
     animate();
 }
-setUp();
+function setupLoadedModel(loadedSceneOrObject, materialMap) {
+    const model = loadedSceneOrObject;
+
+    model.traverse((child) => {
+        if (child.isMesh) {
+            if (child.material) {
+                if (Array.isArray(child.material)) {
+                    child.material = child.material.map((mat) => materialMap.get(mat.name) || mat);
+                } else {
+                    child.material = materialMap.get(child.material.name) || child.material;
+                }
+            }
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
+}
 
 canvas.addEventListener('wheel', (e) => {
     camera.position.z += e.deltaY * Timer.getDelta();

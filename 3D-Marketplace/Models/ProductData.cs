@@ -4,6 +4,10 @@ namespace _3D_Marketplace.Models {
     public class ProductData {
         public int Id { get; set; }
 
+        [Column(TypeName = "varchar(36)")]
+        public string Folder { get; private set; } = Guid.NewGuid().ToString("N");
+
+
         [Column(TypeName = "varchar(100)")]
         public string ViewDefaultRotation { get; set; }
 
@@ -42,6 +46,6 @@ namespace _3D_Marketplace.Models {
         [Required]
         public UserData Seller { get; set; }
 
-        public bool isPublished  { get; set; }
+        public bool isPublished  { get; set; }        
     }
 }
