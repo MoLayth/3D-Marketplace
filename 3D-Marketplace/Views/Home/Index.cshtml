@@ -3,12 +3,23 @@
 </div> *@
 
 @{
-	ViewData["Title"] = "Products";
+    ViewData["Title"] = "Products";
 }
-@model ProductData[]
 
-<div class="Row-Flex-Container" id="storeItem" style="padding:10px;gap:10px"></div>
-<div id="canvas" style="display:none; position:absolute; left:20px; top:20px; right:20px; bottom:20px;"></div>
-<script src="/js/Index.js"></script>
+<div class="Row-Flex-Container" id="storeItem" style="padding:10px; gap:10px;"></div>
 
+<!-- Canvas container -->
+<div id="canvas" style="display:none; position:absolute; left:20px; top:20px; right:20px; bottom:20px; z-index:1000; background:red"></div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "/lib/three/build/three.module.js",
+            "three/addons/": "/lib/three/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module" src="/js/3dView.js"></script>
+<script type="module" src="/js/Index.js"></script>
 

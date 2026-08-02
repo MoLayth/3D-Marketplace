@@ -32,7 +32,7 @@ namespace _3D_Marketplace.Controllers {
         }
 
         public IActionResult GetAllProducts() {
-            return Json(_context.products.ToArray());
+            return Json(_context.products.Include(p=>p.Materials).ToArray());
         }
 
         public IActionResult LoadTab_EditProfile() {
