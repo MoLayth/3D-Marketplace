@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="Row-Flex-Container" id="storeItem" style="padding:10px; gap:10px;"></div>
+
+<div class="blur-panel" id="previewSelectedModel" style="display:none; position:absolute; left:0; top:0; right:0; bottom:0; z-index:1000;">
+
+    <div id="canvas" style="position:absolute; left:20px; top:20px; right:20px; bottom:20px; border-radius:10px; overflow:clip;"></div>
+
+    <div class="Row-Flex-Container" style="position:absolute; right:30px; top:30px;">
+        <!-- this only show up if the viewer is the seller -->
+        <img id="editBtn" class="image-btn" src="/resources/edit.svg" style="display:none" />
+
+        <img id="infoBtn" class="image-btn" src="/resources/info.svg" />
+        <img id="closePreviewBtn" class="image-btn" src="/resources/X.svg" />
+    </div>
+
+    <h1 class="infoElement" id="productName" style="top:30px; left:40px; position:absolute;"></h1>
+    <span class="infoElement" id="productDescription" style="top:60px; left:40px; position:absolute;"></span>
+    <span class="infoElement" id="productPrice" style="bottom:30px; left:30px; position:absolute; font-size:medium"></span>
+    <div class="infoElement" style="bottom:30px; right:30px; position:absolute;">
+        <span id="productSellerName"></span>
+        <img id="productSellerImage" style="height:40px; border-radius:5px;" />
+    </div>
+    
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "/lib/three/build/three.module.js",
+            "three/addons/": "/lib/three/examples/jsm/"
+        }
+    }
+</script>
+<script>
+    var userName = '@ViewData["UserName"]';
+</script>
+<script type="module" src="/js/3dView.js?v=@DateTime.Now.Ticks"></script>
+<script type="module" src="/js/StoreItems.js?v=@DateTime.Now.Ticks"></script>
+

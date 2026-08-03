@@ -3,9 +3,6 @@ function ShowSignOptionPanel() {
     if (SignOptionPanel.style.display == "none") SignOptionPanel.style.display = "flex";
     else SignOptionPanel.style.display = "none";
 }
-function showEditProfilePanel() {
-    switchToTab('EditProfile');
-}
 
 document.querySelectorAll(".closePanel ").forEach(elemnt => {
     elemnt.addEventListener('click', () => {
@@ -60,7 +57,6 @@ document.getElementById('SignInBtn').addEventListener('click', async () => {
         return;
     }
     location.reload();
-    //updateSignData(userName);
 });
 
 const tabContainer = document.getElementById('tabElementContainer');
@@ -89,12 +85,17 @@ async function switchToTab(tabName) {
         case 'UploadMode':
             response = await fetch('/Home/LoadTab_UploadMode', { method: 'POST' });
             break;
+        case 'StoreItems':
+            response = await fetch('/Home/LoadTab_StoreItems', { method: 'POST' });
+            break;
     }
 
     html = await response.text();
     tabContainer.innerHTML = html;
     executeInjectedScripts(tabContainer); // this well just Execute the new loaded script inside the tabContainer.
 }
+
+switchToTab('StoreItems');  // Load the StoreItems tab by default
 
 // because how the browser is woking we need just to run createElement and copy 
 // all the script from the container so the browser run them.

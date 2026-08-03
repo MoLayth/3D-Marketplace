@@ -20,6 +20,7 @@ namespace _3D_Marketplace.Controllers {
             if (user != null) {
                 ViewData["Name"] = user.Name;
                 ViewData["ProfilePic"] = user.ProfilePicture;
+                ViewData["UserName"] = user.UserName;
             }
 
             return View(_context.products.ToArray());
@@ -32,9 +33,12 @@ namespace _3D_Marketplace.Controllers {
         }
 
         public IActionResult GetAllProducts() {
-            return Json(_context.products.Include(p=>p.Materials).ToArray());
+            return Json(_context.products.Include(p=>p.Materials).Include(p => p.Seller).ToArray());
         }
-
+        public IActionResult LoadTab_StoreItems() {
+            string? username = Request.Cookies["RememberMeUser"];
+            return PartialView("StoreItems");
+        }
         public IActionResult LoadTab_EditProfile() {
             string? username = Request.Cookies["RememberMeUser"];
             return PartialView("EditProfile", model: _context.Users.FirstOrDefault(u => u.UserName == username));

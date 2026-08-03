@@ -9,7 +9,7 @@
 </head>
 <body class="site-layout">
     <div class="Row-Flex-Container" style="padding:10px; background:#1B1B1B">
-        <img src="~/resources/3D-Marketplace.png" style="height:40px; margin-right:20px" />
+        <img class="image-btn" onclick="switchToTab('StoreItems')" src="~/resources/3D-Marketplace.png" style="height:40px; margin-right:20px; padding:0px" />
         <div style="flex:2"></div>
         <img class="image-btn" src="~/resources/upload2.svg" onclick="switchToTab('UploadMode')" />
 
@@ -21,7 +21,7 @@
                 img = ViewData["ProfilePic"].ToString();
             }
 
-            <img class="image-btn" src="@img" style="height: 40px" onclick="showEditProfilePanel()" />
+            <img class="image-btn" src="@img" style="height: 40px" onclick="switchToTab('EditProfile')" />
         }
         else {
             <img class="image-btn" src="~/resources/avatar.svg" style="height: 40px" onclick="showSignPanel()" />            
