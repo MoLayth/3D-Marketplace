@@ -95,9 +95,9 @@
     }
 </script>
 <script>
-        const productId = @(Json.Serialize(Model?.Id ?? -1));
-        const isPublished = @Json.Serialize(Model?.isPublished ?? false);
-        const product = @Html.Raw(JsonSerializer.Serialize(Model, serializerOptions));
+        var productId = @(Json.Serialize(Model?.Id ?? -1));
+        var isPublished = @Json.Serialize(Model?.isPublished ?? false);
+        var product = @Html.Raw(JsonSerializer.Serialize(Model, serializerOptions));
         console.log(product);
 </script>
 <script type="module" src="~/js/UploadModelPanel.js?v=@DateTime.Now.Ticks"></script>

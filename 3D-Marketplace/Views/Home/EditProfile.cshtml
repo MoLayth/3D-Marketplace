@@ -31,6 +31,9 @@
 		</div>
 	</div>
 	<div style="width:100%; height:100%;">
+		@{
+			ViewData["UserName"] = Model?.UserName;
+		}
 		@await Html.PartialAsync("StoreItems")
 	</div>
 </div>

@@ -20,7 +20,6 @@ namespace _3D_Marketplace.Controllers {
             if (user != null) {
                 ViewData["Name"] = user.Name;
                 ViewData["ProfilePic"] = user.ProfilePicture;
-                ViewData["UserName"] = user.UserName;
             }
 
             return View(_context.products.ToArray());
@@ -37,18 +36,21 @@ namespace _3D_Marketplace.Controllers {
         }
         public IActionResult LoadTab_StoreItems() {
             string? username = Request.Cookies["RememberMeUser"];
+            ViewData["UserName"] = username;
             return PartialView("StoreItems");
         }
         public IActionResult LoadTab_EditProfile() {
             string? username = Request.Cookies["RememberMeUser"];
             return PartialView("EditProfile", model: _context.Users.FirstOrDefault(u => u.UserName == username));
         }
-        public IActionResult LoadTab_UploadMode(string productName = "") {
+
+        [HttpPost]
+        public IActionResult LoadTab_UploadMode(int productId = -1) {
             ProductData? product = null;
-            if (!string.IsNullOrEmpty(productName)) {
+            if (productId >= 0) {
                 var user = GetUserViaCookies();
                 if (user != null)
-                    product = user.products.FirstOrDefault(p => p.Name == productName);
+                    product = user.products.FirstOrDefault(p => p.Id == productId);
             }
 
             return PartialView("UploadModelPanel",model: product);
@@ -64,8 +66,8 @@ namespace _3D_Marketplace.Controllers {
         public class ProductUploadDto {
             public int ProductId { get; set; }
             public bool IsPublished { get; set; }
-            public string ViewDefaultRotation { get; set; } = "{\"x\":0,\"y\":0}";
-            public float CameraDefaultZPos { get; set; }
+            public string controlsDefaultTarget { get; set; } = "{\"x\":0,\"y\":0,\"z\":0}";
+            public string cameraDefaultPos { get; set; } = "{\"x\":0,\"y\":0,\"z\":10}";
 
             // Files vs Paths
             public IFormFile? ModelFile { get; set; }
@@ -112,8 +114,8 @@ namespace _3D_Marketplace.Controllers {
                 Product.Stock = dto.Stock;
                 Product.Description = dto.Description;
                 Product.isPublished = dto.IsPublished;
-                Product.CameraDefaultZPos = dto.CameraDefaultZPos;
-                Product.ViewDefaultRotation = dto.ViewDefaultRotation;
+                Product.cameraDefaultPos = dto.cameraDefaultPos;
+                Product.controlsDefaultTarget = dto.controlsDefaultTarget;
                 Product.HDRI_Brightness = dto.HdriBrightness;
            
                 if (!string.IsNullOrEmpty(thumbnailPath)) Product.Thumbnail = thumbnailPath;
@@ -404,7 +406,7 @@ namespace _3D_Marketplace.Controllers {
         private UserData? GetUserViaCookies() {
             if (Request.Cookies.ContainsKey("RememberMeUser")) {
                 string username = Request.Cookies["RememberMeUser"];
-                return  _context.Users.Include( u => u.products ).FirstOrDefault(u => u.UserName == username);
+                return  _context.Users.Include( u => u.products ).ThenInclude(p => p.Materials).FirstOrDefault(u => u.UserName == username);
             }
 
             return null;

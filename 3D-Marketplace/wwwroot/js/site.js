@@ -64,7 +64,7 @@ const tabContainer = document.getElementById('tabElementContainer');
 /**
  * @param {'EditProfile' | 'UploadMode' | 'StoreItems'} tabName
  */
-async function switchToTab(tabName) {
+async function switchToTab(tabName,extraInfo) {
 
     // check if the user is sign in
     const checkResponse = await fetch('/Home/IsUserSignIn', { method: 'GET' });
@@ -83,7 +83,8 @@ async function switchToTab(tabName) {
             break;
 
         case 'UploadMode':
-            response = await fetch('/Home/LoadTab_UploadMode', { method: 'POST' });
+            if (!extraInfo) extraInfo = -1;
+            response = await fetch(`/Home/LoadTab_UploadMode?productId=${extraInfo} `, { method: 'POST' });
             break;
         case 'StoreItems':
             response = await fetch('/Home/LoadTab_StoreItems', { method: 'POST' });

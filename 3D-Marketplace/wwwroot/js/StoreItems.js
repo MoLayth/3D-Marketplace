@@ -115,8 +115,10 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
 
             if (userName === product.seller.userName) {
                 editBtn.style.display = 'block';
+                editBtn.onclick = () => { switchToTab('UploadMode', product.id) };
             } else {
                 editBtn.style.display = 'none';
+                editBtn.onclick = () => { };
             }
 
             // 3. Load 3D scene

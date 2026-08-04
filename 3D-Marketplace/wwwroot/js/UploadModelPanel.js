@@ -1,22 +1,21 @@
 ﻿import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-import { MaterialInfo } from '/MyModels.js';
+import { MaterialInfo } from './MyModels.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const scene = new THREE.Scene(); // Set up the scene
 
 const canvas_container = document.getElementById('canvas-container');
 
-let cameraDefaultZPos = 10;
-const viewDefaultRotation = new THREE.Vector2(0, 0); // x for the camera and Y for the model
+const cameraDefaultPos = new THREE.Vector3(0, 0, 10);     // <-- this new
+const controlsDefaultTarget = new THREE.Vector3(0, 0, 0); // <-- this new
 
 const camera = new THREE.PerspectiveCamera(45, canvas_container.clientWidth / canvas_container.clientHeight, 0.1, 100);
-camera.position.set(0, 0, cameraDefaultZPos);
+camera.position.copy(cameraDefaultPos);
 camera.lookAt(0, 0, 0);
 
-const cameraParent = new THREE.Object3D();
-cameraParent.add(camera);
-scene.add(cameraParent);
+scene.add(camera);
 
 const render = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 
@@ -25,7 +24,8 @@ render.outputColorSpace = THREE.SRGBColorSpace;
 render.setSize(canvas_container.clientWidth, canvas_container.clientHeight);
 canvas_container.appendChild(render.domElement);
 
-
+const controls = new OrbitControls(camera, render.domElement);
+controls.enablePan = false;
 
 const fpxLoader = new FBXLoader();
 const gltfLoader = new GLTFLoader();
@@ -524,8 +524,12 @@ document.getElementById('canvas-Save').addEventListener('click', async () => {
     // Append Scalars & Form Inputs
     productFormData.append("productId", productId);
     productFormData.append("isPublished", isPublished);
-    productFormData.append("ViewDefaultRotation", JSON.stringify({ x: viewDefaultRotation.x, y: viewDefaultRotation.y }));
-    productFormData.append("CameraDefaultZPos", cameraDefaultZPos);
+
+    productFormData.append("controlsDefaultTarget",
+        JSON.stringify({ x: controlsDefaultTarget.x, y: controlsDefaultTarget.y, z: controlsDefaultTarget.z }));
+    productFormData.append("cameraDefaultPos",
+        JSON.stringify({ x: cameraDefaultPos.x, y: cameraDefaultPos.y, z: cameraDefaultPos.z }));
+
     productFormData.append("HdriBrightness", sceneBrightness);
 
     productFormData.append("ProductName", productNameInput.value);
@@ -611,9 +615,10 @@ function capturedThumbnail() {
         thumbnailImage.classList.add('vertical-Open');
         thumbnailImage.style.display = "flex";
 
-        cameraDefaultZPos = camera.position.z;
-        viewDefaultRotation.x = cameraParent.rotation.x;
-        viewDefaultRotation.y = model.rotation.z;
+
+        // --- FIX HERE: Save full Position & Target ---
+        cameraDefaultPos.copy(camera.position);
+        controlsDefaultTarget.copy(controls.target);
 
         thumbnaiTimerId = setTimeout(() => {
             thumbnailImage.classList.remove('vertical-Open');
@@ -648,6 +653,7 @@ function animate(timestamp) {
 
     render.render(scene, camera);
 
+    controls.update();
 }
 
 
@@ -660,29 +666,6 @@ window.addEventListener('resize', () => {
     render.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 })
 
-canvas_container.addEventListener('wheel', (e) => {
-    camera.position.z += e.deltaY * Timer.getDelta();
-    if (camera.position.z < 2) camera.position.z = 1;
-});
-
-canvas_container.addEventListener('mousemove', (e) => {
-    if (e.buttons === 2) { // if right click
-        if (!model) return;
-
-        canvas_container.style.cursor = "url('/resources/cursorRotate.svg'), auto"
-        model.rotation.z += e.movementX * Timer.getDelta();
-        cameraParent.rotation.x += e.movementY * Timer.getDelta() * -1;
-    }
-});
-
-window.addEventListener('mouseup', () => {
-    canvas_container.style.cursor = "default";
-});
-
-render.domElement.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-});
-
 document.getElementById("canvas-resetViewButton").addEventListener('click', () => {
     resetView();
 });
@@ -690,13 +673,14 @@ document.getElementById("canvas-resetViewButton").addEventListener('click', () =
 function resetView() {
     if (!model) return;
 
-    cameraParent.rotation.x = viewDefaultRotation.x;
-    camera.position.z = cameraDefaultZPos;
-    model.rotation.z = viewDefaultRotation.y;
+    camera.position.copy(cameraDefaultPos);
+    controls.target.copy(controlsDefaultTarget);
+
+    controls.update();
 }
 
 // this should have all the function and ui data manipulation that need to run when the pag load
-function start() {
+async function start() {
     if (productId <= 0 || !product) {
         setDefault_HDMI();
         setDefault_Background();
@@ -736,31 +720,61 @@ function start() {
         if (product.HDRI) applyHDMITexture(product.HDRI);
         if (product.Background) applyBackground(product.Background);
 
-        const rotationObj = JSON.parse(product.ViewDefaultRotation);
-        viewDefaultRotation.x = rotationObj.x;
-        viewDefaultRotation.y = rotationObj.y;
+        let data_cameraDefaultPos = null;
+        let data_controlsDefaultTarget = null;
+        for (var i = 0; i < 2; i++) { // i need to duble parse it because it duble stringified in the database
+            try { data_cameraDefaultPos = JSON.parse(product.cameraDefaultPos); } catch {}
+            try { data_controlsDefaultTarget = JSON.parse(product.controlsDefaultTarget); } catch {}
+        }
 
-        cameraDefaultZPos = product.CameraDefaultZPos;
+        try {
+            cameraDefaultPos.set(data_cameraDefaultPos.x, data_cameraDefaultPos.y, data_cameraDefaultPos.z);
+            controlsDefaultTarget.set(data_controlsDefaultTarget.x, data_controlsDefaultTarget.y, data_controlsDefaultTarget.z);
+        } catch {
+            cameraDefaultPos.set(0, 0, 10);
+            controlsDefaultTarget.set(0, 0, 0);
+        }
 
-        // apply project setting
         productName.value = product.Name;
         productPriceInput.value = product.Price;
         StockInput.value = product.Stock;
         DescriptionInput.value = product.Description;
 
+
         _3dModel = product._3dModel;
-        const modelPath = product._3dModel;
-        if (modelPath && modelPath.endsWith('.fbx')) {
-            const loader = new FBXLoader();
-            loader.load(modelPath, (fbx) => {
-                setupLoadedModel(fbx);
-            });
-        } else if (modelPath) {
-            // GLTF/GLB loader logic goes here
+        const modelPath = _3dModel;
+        if (modelPath) {
+            try {
+                const loadobject = await loadModelAsync(modelPath);
+                if (loadobject) {
+                    setupLoadedModel(loadobject);
+                    resetView();
+                }
+            } catch (error) {
+                showWarningMessage("oppps something went wrong while loading the model, please try again later");
+            }
         }
     }
 
     updateCanvasUI();
     animate();
+    function loadModelAsync(modelPath) {
+        return new Promise((resolve, reject) => {
+            if (!modelPath) return resolve(null);
+
+            if (modelPath.endsWith('.fbx')) {
+                const loader = new FBXLoader();
+                loader.load(modelPath,(fbx) => resolve(fbx),undefined,(error) => reject(error));
+            } else {
+                const loader = new GLTFLoader();
+                loader.load(
+                    modelPath,
+                    (gltf) => resolve(gltf.scene),
+                    undefined,
+                    (error) => reject(error)
+                );
+            }
+        });
+    }
 }
 start();

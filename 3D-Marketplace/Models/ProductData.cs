@@ -9,9 +9,10 @@ namespace _3D_Marketplace.Models {
 
 
         [Column(TypeName = "varchar(100)")]
-        public string ViewDefaultRotation { get; set; }
+        public string controlsDefaultTarget { get; set; } = "{\"x\":0,\"y\":0,\"z\":0}";
 
-        public float CameraDefaultZPos { get; set; }
+        [Column(TypeName = "varchar(100)")]
+        public string cameraDefaultPos { get; set; } = "{\"x\":0,\"y\":0,\"z\":10}";
 
         [Column(TypeName = "varchar(500)")]
         public string Thumbnail { get; set; }
