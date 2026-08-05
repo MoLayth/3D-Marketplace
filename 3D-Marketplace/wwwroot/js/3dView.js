@@ -97,11 +97,10 @@ export function SetThe3dScene(_3dModelPath, materialsInfo, sceneInfo) {
 function SetScene(sceneInfo) {
     if (!sceneInfo) return;
 
-    camera.position.z = sceneInfo.cameraDefaultZPos || 5;
+    camera.position.copy(sceneInfo.cameraDefaultPos);
+    controls.target.copy(sceneInfo.controlsDefaultTarget);
 
-    const rotX = sceneInfo.viewDefaultRotation?.x ?? 0;
-    const rotY = sceneInfo.viewDefaultRotation?.y ?? 0;
-    camera.rotation.set(rotX, rotY, 0);
+    controls.update();
 
     const hdriPath = sceneInfo.HDRI || sceneInfo.hdri;
     const bgPath = sceneInfo.Background || sceneInfo.background;
@@ -146,7 +145,7 @@ function setupLoadedModel(loadedSceneOrObject, materialMap) {
 
 export function resize() {
     const canvas = document.getElementById('canvas');
-    if (!canvas || canvas.clientWidth === 0 || canvas.clientHeight === 0) return;
+    if (!canvas || !camera || canvas.clientWidth === 0 || canvas.clientHeight === 0) return;
 
     camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();

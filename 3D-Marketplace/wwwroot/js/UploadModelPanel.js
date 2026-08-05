@@ -51,7 +51,7 @@ function updateCanvasUI() {
     canvas_uploadPanel.style.display = "none";
 }
 
-const canvas_removeModelBtn = document.getElementById('canvas-removeModel');
+const canvas_removeModelBtn = document.getElementById('canvas-removeModelBtn');
 canvas_removeModelBtn.addEventListener('click', () => {
     scene.remove(model);
     model = null;
@@ -285,7 +285,7 @@ function createImageField(textureName, image, onFileChange) {
 
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = ".png, .jpg";
+    input.accept = ".png, .jpg , .jpeg";
     input.style.display = 'none';
     input.addEventListener('change', (e) => {
         const newfile = e.target.files[0];
@@ -299,7 +299,7 @@ function createImageField(textureName, image, onFileChange) {
 
     const removeTextureBrn = document.createElement('img');
     removeTextureBrn.classList.add("image-btn");
-    removeTextureBrn.style.display = 'none';
+    
     removeTextureBrn.style.height = '30px';
     removeTextureBrn.src = '/resources/X.svg';
     removeTextureBrn.addEventListener('click', () => {
@@ -311,7 +311,14 @@ function createImageField(textureName, image, onFileChange) {
     const setTextureBtn = document.createElement('img');
     setTextureBtn.style.height = '50px';
     setTextureBtn.classList.add("image-btn");
-    setTextureBtn.src = image?? '/resources/upload.svg';
+    if (image) {
+        setTextureBtn.src = image;
+        removeTextureBrn.style.display = 'flex';
+
+    } else {
+        setTextureBtn.src = '/resources/upload.svg';
+        removeTextureBrn.style.display = 'none';
+    }
     
     setTextureBtn.addEventListener('click', () => { input.click() });
 
@@ -493,7 +500,12 @@ const StockInput = document.getElementById('StockInput');
 const DescriptionInput = document.getElementById('DescriptionInput');
 const ProjectTab = document.getElementById('ProjectId'); // this well come useful in reportValidity
 // save the project without publishing it
-document.getElementById('canvas-Save').addEventListener('click', async () => {
+const saveProjectBtn = document.getElementById('canvas-Save');
+saveProjectBtn.addEventListener('click', async () => {
+
+    if (saveProjectBtn.disabled) return;
+    saveProjectBtn.disabled = true;
+    saveProjectBtn.classList.add('disabled');
 
     if (productNameInput.value == "") {
         ProjectTab.click();
@@ -544,7 +556,14 @@ document.getElementById('canvas-Save').addEventListener('click', async () => {
 
     // then save the material after successfully saving the product
     if (saveResponse.ok) {
-        const productName = await saveResponse.json();
+        const responseData = await saveResponse.json();
+        const productName = responseData.name;
+        productId = responseData.id; // this well prevent the dubliction of the product on stor item when the user hit save multiple times
+
+        //---------------------------------------------------------------------------------
+        canvas_removeModelBtn.parentElement.style.display = 'none';
+        canvas_deleteProjectBtn.parentElement.style.display = 'flex';
+        canvas_publishProjectBtn.parentElement.style.display = 'flex';
 
         const materialPromises = modelMaterials.map(mat => {
             function appendTextureToForm(formData, fileOrPath, fileFieldName, pathFieldName) {
@@ -577,13 +596,36 @@ document.getElementById('canvas-Save').addEventListener('click', async () => {
             formData.append('MakeMaterialTransmission', mat.getMakeMaterialTransmission());
 
             return fetch('/Home/SaveMaterial', { method: 'POST', body: formData });
-        });
+        });        
         await Promise.all(materialPromises);
+
+        saveProjectBtn.classList.remove('disabled');
+        showSuccessMessage("Project Saved Successfully");
     }
     else {
-        
+        showWarningMessage("Failed to save the project. Please try again.");
     }
 });
+
+const canvas_deleteProjectBtn = document.getElementById('canvas-delete');
+canvas_deleteProjectBtn.addEventListener('click', async () => {
+    if (confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
+
+        if (canvas_deleteProjectBtn.disabled) return;
+        canvas_deleteProjectBtn.disabled = true;
+
+        const response = await fetch(`/Home/DeleteProduct?productId=${productId}`, { method: 'DELETE' });
+        if (response.ok) {
+            showSuccessMessage("Project deleted successfully.");
+            switchToTab('UploadMode');
+            canvas_deleteProjectBtn.disabled = false;
+        } else {
+            showWarningMessage("Failed to delete the project. Please try again.");
+            canvas_deleteProjectBtn.disabled = false;
+        }
+    }
+});
+const canvas_publishProjectBtn = document.getElementById('canvas-publishProjectBtn');
 
 
 const thumbnailImage = document.getElementById('thumbnailImage');

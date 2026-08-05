@@ -89,58 +89,60 @@ namespace _3D_Marketplace.Controllers {
             public string? Description { get; set; }
         }
         [HttpPost]
-            public async Task<IActionResult> SaveProduct([FromForm] ProductUploadDto dto) {
-                UserData user = GetUserViaCookies();
-                if (user == null) return Unauthorized();
+        public async Task<IActionResult> SaveProduct([FromForm] ProductUploadDto dto) {
+            UserData user = GetUserViaCookies();
+            if (user == null) return Unauthorized();
 
-                    var existingProduct = user.products.FirstOrDefault(p => p.Id == dto.ProductId);
-                ProductData Product = existingProduct ?? new ProductData();
-                string safeFolderName = Path.Join("3d-assets",GetSafeStringForPath(user.UserName) ,GetSafeStringForPath(Product.Folder));
+                var existingProduct = user.products.FirstOrDefault(p => p.Id == dto.ProductId);
+            ProductData Product = existingProduct ?? new ProductData();
+            string safeFolderName = Path.Join("3d-assets",GetSafeStringForPath(user.UserName) ,GetSafeStringForPath(Product.Folder));
 
-                async Task<string?> ResolveAssetPath(IFormFile? fileUpload, string? existingPath, string filePrefix,string fileExtension = "") {
-                    if (fileUpload != null && fileUpload.Length > 0) {
-                        return await SaveFile(safeFolderName, filePrefix, fileUpload,fileExtension);
-                    }
-                    return existingPath; // Keeps existing path string if no new file uploaded
+            async Task<string?> ResolveAssetPath(IFormFile? fileUpload, string? existingPath, string filePrefix,string fileExtension = "") {
+                if (fileUpload != null && fileUpload.Length > 0) {
+                    return await SaveFile(safeFolderName, filePrefix, fileUpload,fileExtension);
                 }
+                return existingPath; // Keeps existing path string if no new file uploaded
+            }
 
-                string modelPath = await ResolveAssetPath(dto.ModelFile, dto.ModelPath, "_3dModel");
-                string? thumbnailPath = await ResolveAssetPath(dto.ThumbnailFile, dto.ThumbnailPath, "Thumbnail",".png");
-                string? hdriPath = await ResolveAssetPath(dto.HdriFile, dto.HdriPath, "hdri");
-                string? backgroundPath = await ResolveAssetPath(dto.BackgroundFile, dto.BackgroundPath, "Background");
+            string modelPath = await ResolveAssetPath(dto.ModelFile, dto.ModelPath, "_3dModel");
+            string? thumbnailPath = await ResolveAssetPath(dto.ThumbnailFile, dto.ThumbnailPath, "Thumbnail",".png");
+            string? hdriPath = await ResolveAssetPath(dto.HdriFile, dto.HdriPath, "hdri");
+            string? backgroundPath = await ResolveAssetPath(dto.BackgroundFile, dto.BackgroundPath, "Background");
 
-                Product.Name = dto.ProductName;
-                Product.Price = dto.ProductPrice;
-                Product.Stock = dto.Stock;
-                Product.Description = dto.Description;
-                Product.isPublished = dto.IsPublished;
-                Product.cameraDefaultPos = dto.cameraDefaultPos;
-                Product.controlsDefaultTarget = dto.controlsDefaultTarget;
-                Product.HDRI_Brightness = dto.HdriBrightness;
+            Product.Name = dto.ProductName;
+            Product.Price = dto.ProductPrice;
+            Product.Stock = dto.Stock;
+            Product.Description = dto.Description;
+            Product.isPublished = dto.IsPublished;
+            Product.cameraDefaultPos = dto.cameraDefaultPos;
+            Product.controlsDefaultTarget = dto.controlsDefaultTarget;
+            Product.HDRI_Brightness = dto.HdriBrightness;
            
-                if (!string.IsNullOrEmpty(thumbnailPath)) Product.Thumbnail = thumbnailPath;
-                Product._3dModel = modelPath;   
+            if (!string.IsNullOrEmpty(thumbnailPath)) Product.Thumbnail = thumbnailPath;
+            Product._3dModel = modelPath;   
 
-                if (existingProduct != null) {
-                    if (string.IsNullOrEmpty(hdriPath) && !Product.HDRI.Contains("DefaultHDMI"))
-                        DeleteFileIfExist(Product.HDRI);
+            if (existingProduct != null) {
+                if (string.IsNullOrEmpty(hdriPath) && !Product.HDRI.Contains("DefaultHDMI"))
+                    DeleteFileIfExist(Product.HDRI);
 
-                    if (string.IsNullOrEmpty(backgroundPath) && !Product.Background.Contains("ModelBackground"))
-                        DeleteFileIfExist(Product.Background);
-                }
-                else {
-                    Product.SellerId = user.Id;
-                    Product.Seller = user;
+                if (string.IsNullOrEmpty(backgroundPath) && !Product.Background.Contains("ModelBackground"))
+                    DeleteFileIfExist(Product.Background);
+            }
+            else {
+                Product.SellerId = user.Id;
+                Product.Seller = user;
 
-                    user.products.Add(Product);
-                }
+                user.products.Add(Product);
+            }
 
-                Product.HDRI = string.IsNullOrEmpty(hdriPath) ? "/resources/DefaultHDMI.jpg" : hdriPath;
-                Product.Background = string.IsNullOrEmpty(backgroundPath) ? "/resources/ModelBackground.jpg" : backgroundPath;
+            Product.HDRI = string.IsNullOrEmpty(hdriPath) ? defaultHDMIPath : hdriPath;
+            Product.Background = string.IsNullOrEmpty(backgroundPath) ? defaultBackgroundPath : backgroundPath;
 
-                await _context.SaveChangesAsync();
-                return Json(dto.ProductName);
-            }   
+            await _context.SaveChangesAsync();
+            return Json(new { id = Product.Id , name = Product.Name });
+        }
+        private string defaultHDMIPath => "/resources/DefaultHDMI.jpg";
+        private string defaultBackgroundPath => "/resources/ModelBackground.jpg";
         public class MaterialUploadDto {
             public string ProductName { get; set; }
             public string MaterialName { get; set; }
@@ -244,6 +246,47 @@ namespace _3D_Marketplace.Controllers {
         }
         private string GetSafeStringForPath(string value) {
             return string.Concat(value.Split(Path.GetInvalidFileNameChars()));
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteProduct(int productId) {
+            Console.WriteLine("-----------------------------------------------------------------------------------");
+            Console.WriteLine("DeleteProduct called with productId: " + productId);
+
+            UserData user = GetUserViaCookies();
+            if (user == null) return Unauthorized();
+            ProductData product = user.products.FirstOrDefault(p => p.Id == productId);
+            if (product == null) return NotFound();
+
+            string safeFolderName = Path.Join("3d-assets", GetSafeStringForPath(user.UserName), GetSafeStringForPath(product.Folder));
+            if (Directory.Exists(safeFolderName)) {
+                // try to delete the hole folder, if it fails delete the files one by one and then throw the exception
+                try { Directory.Delete(safeFolderName, recursive: true); }
+
+                catch (Exception) {
+                    DeleteFileIfExist(product.Thumbnail);
+
+                    DeleteFileIfExist(product._3dModel);
+                    if (product.HDRI != defaultHDMIPath) DeleteFileIfExist(product.HDRI);
+                    if (product.Background != defaultBackgroundPath) DeleteFileIfExist(product.Background);
+                    foreach (var material in product.Materials) {
+                        DeleteFileIfExist(material.BaseColor);
+                        DeleteFileIfExist(material.Roughness);
+                        DeleteFileIfExist(material.Emission);
+                        DeleteFileIfExist(material.Metallic);
+                        DeleteFileIfExist(material.NormalMap);
+                        DeleteFileIfExist(material.AmbientOcclusion);
+                        DeleteFileIfExist(material.Alpha);
+                    }
+                }
+            }
+            else return NotFound();
+
+            // Always remove the database record even if the folder deletion fails, to avoid orphaned records
+            _context.products.Remove(product);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
         // path is a web Path something like: /resources/folder_name/file_name

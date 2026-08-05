@@ -1,0 +1,68 @@
+﻿
+<div id="successMessage" class="Row-Flex-Container success-message" style="display:none;">
+    <img src="~/resources/success.svg" style="height:30px" />
+    <label id="successlabel"></label>
+</div>
+
+
+<div id="WarningMessage" class="Row-Flex-Container warninglabel" style="display:none;">
+    <img src="~/resources/warning.svg" style="height:30px" />
+    <label id="warninglabel"></label>
+</div>
+
+<script>
+    let popupTimeoutId = null;
+    let fadeoutTimeoutId = null;
+
+    const successMessage = document.getElementById("successMessage");
+    const successlabel = document.getElementById("successlabel");
+    function showSuccessMessage(message){
+        if(message != "") successlabel.textContent = message;
+
+        if(popupTimeoutId) clearTimeout(popupTimeoutId);
+        if(fadeoutTimeoutId) clearTimeout(fadeoutTimeoutId);
+
+        successMessage.style.display = "flex";
+        successMessage.classList.add("vertical-Open");
+
+        popupTimeoutId = setTimeout(() =>{
+            successMessage.classList.remove("vertical-Open");
+            successMessage.classList.add("vertical-close"); // play fadeout animation
+
+            // then make hide it after everything done
+            fadeoutTimeoutId = setTimeout(()=>{
+                successMessage.style.display = "none";
+                successMessage.classList.remove("vertical-close");
+
+                popupTimeoutId = null;
+                fadeoutTimeoutId = null;
+            },150);
+        },5000);
+    }
+
+    const warningMessage = document.getElementById("WarningMessage");
+    const warningLabel = document.getElementById("warninglabel");
+    function showWarningMessage(message){
+        if(message != "") warningLabel.textContent = message;
+
+        if(popupTimeoutId) clearTimeout(popupTimeoutId);
+        if(fadeoutTimeoutId) clearTimeout(fadeoutTimeoutId);
+
+        warningMessage.style.display = "flex";
+        warningMessage.classList.add("vertical-Open");
+
+        popupTimeoutId = setTimeout(() =>{
+            warningMessage.classList.remove("vertical-Open");
+            warningMessage.classList.add("vertical-close"); // play fadeout animation
+
+            // then make hide it after everything done
+            fadeoutTimeoutId = setTimeout(()=>{
+                warningMessage.style.display = "none";
+                warningMessage.classList.remove("vertical-close");
+
+                popupTimeoutId = null;
+                fadeoutTimeoutId = null;
+            },150);
+        },5000);
+    }
+</script>

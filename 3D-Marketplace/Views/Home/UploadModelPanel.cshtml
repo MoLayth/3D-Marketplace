@@ -59,24 +59,35 @@
         </div>
 
         <div id="canvas-modifyPanel" class="column-Flex-Container" style="position:absolute; right:10px; bottom:10px; align-items:end">
-            <div style="justify-items:center;">
-                <span style="text-align:center;">Remove Model</span>
-                <img class="image-btn" id="canvas-removeModel" src="~/resources/X.svg" />
+
+            <div style="justify-content:center; align-items: center; display:@(Model == null ? "none" : "flex")">
+                <span>Delete Project</span>
+                <img class="image-btn" id="canvas-delete" src="~/resources/bin.svg" />
+            </div>
+
+            <div style="justify-content:center; align-items: center; display:@(Model == null ? "flex" : "none")">
+                <span>Remove Model</span>
+                <img class="image-btn" id="canvas-removeModelBtn" src="~/resources/X.svg" />
             </div>
 
             <div style="height:15px"></div>
 
-            <div style="justify-items:center;">
-                <span style="text-align:center;">Save</span>
+            <div style="justify-content:center; align-items: center; display:@(Model == null ? "none" : "flex")">
+                <span>Publish Project</span>
+                <img class="image-btn" id="canvas-publishProjectBtn" src="~/resources/paper-plane.svg" />
+            </div>
+
+            <div style="justify-content:center; align-items: center;">
+                <span>Save</span>
                 <img class="image-btn" id="canvas-Save" style="height:40px" src="~/resources/Save.svg" />
             </div>
-            <div style="justify-items:center;">
-                <span style="text-align:center;">Set Thumbnail</span>
+            <div style="justify-content:center; align-items: center;">
+                <span>Set Thumbnail</span>
                 <img class="image-btn" id="canvas-takeScreenshot" src="~/resources/screenshot.svg" />
             </div>
 
-            <div style="justify-items:center;">
-                <span style="text-align:center;">Reset View </span>
+            <div style="justify-content:center; align-items: center;">
+                <span>Reset View </span>
                 <img class="image-btn" id="canvas-resetViewButton" src="~/resources/Reset.svg" />
             </div>
         </div>

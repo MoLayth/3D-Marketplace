@@ -141,13 +141,19 @@ textarea:focus{
     background: #0000006c;
 }
 
+.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    background: black;
+}
 
 .Store-item-cover-label {
+    font-size: 12px;
     position: absolute;
     left: 50%;
-    bottom: -20px;
+    bottom: -100%;
     transform: translateX(-50%);
-    transition:.25s;
+    transition: .25s;
     -webkit-text-stroke: .15px black;
 }
 .Store-item-cover:hover .Store-item-cover-label {
@@ -299,6 +305,18 @@ td {
     top: 65px;
     z-index: 999
 }
+.success-message {
+    background: #32ed00;
+    border: 2px solid #206700;
+    border-radius: 10px;
+    color: white;
+    padding: 10px;
+    position: fixed;
+    right: 10px;
+    top: 65px;
+    z-index: 999
+}
+
 .blur-panel {
     background: #39393964;
     backdrop-filter: blur(12px);

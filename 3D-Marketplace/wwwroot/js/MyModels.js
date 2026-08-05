@@ -159,47 +159,30 @@ export class MaterialInfo {
     getThickness() { return this.#thickness; }
 }
 export class SceneInfo {
-    constructor(sceneBrightness, HDRI, Background, viewDefaultRotation, cameraDefaultZPos) {
-        this.cameraDefaultZPos = cameraDefaultZPos || 5;
+    constructor(sceneBrightness, HDRI, Background, controlsDefaultTarget, cameraDefaultPos) {
+        //this.cameraDefaultZPos = cameraDefaultZPos || 5;
+
+        this.cameraDefaultPos = new THREE.Vector3(0, 0, 10);
+        this.controlsDefaultTarget = new THREE.Vector3(0, 0, 0);    
+
+        let data_cameraDefaultPos = null;
+        let data_controlsDefaultTarget = null;
+        for (var i = 0; i < 2; i++) { // i need to duble parse it because it duble stringified in the database
+            try { data_cameraDefaultPos = JSON.parse(cameraDefaultPos); } catch { }
+            try { data_controlsDefaultTarget = JSON.parse(controlsDefaultTarget); } catch { }
+        }
+
+        try {
+            this.cameraDefaultPos.set(data_cameraDefaultPos.x, data_cameraDefaultPos.y, data_cameraDefaultPos.z);
+            this.controlsDefaultTarget.set(data_controlsDefaultTarget.x, data_controlsDefaultTarget.y, data_controlsDefaultTarget.z);
+        } catch {}
+
+
         this.HDRI = HDRI || '/resources/DefaultHDMI.jpg';
         this.sceneBrightness = sceneBrightness || 1.0;
 
-        this.viewDefaultRotation = this.parseRotation(viewDefaultRotation);
+        //this.viewDefaultRotation = this.parseRotation(viewDefaultRotation);
+
         this.Background = Background || '/resources/ModelBackground.jpg';
-    }
-
-    parseRotation(rawRotation) {
-        if (!rawRotation) return new THREE.Vector2(0, 0);
-
-        let data = rawRotation;
-
-        // 1. If it's a string, try parsing it
-        if (typeof data === 'string') {
-            try {
-                data = JSON.parse(data);
-            } catch (e) {
-                console.warn("Failed first JSON.parse on rotation:", rawRotation);
-                return new THREE.Vector2(0, 0);
-            }
-        }
-
-        // 2. If it was double-stringified, data is still a string! Parse a second time.
-        if (typeof data === 'string') {
-            try {
-                data = JSON.parse(data);
-            } catch (e) {
-                console.warn("Failed second JSON.parse on rotation:", data);
-                return new THREE.Vector2(0, 0);
-            }
-        }
-
-        // 3. Now data is guaranteed to be an object with {x, y}
-        if (data && typeof data === 'object') {
-            const x = Number(data.x) || 0;
-            const y = Number(data.y) || 0;
-            return new THREE.Vector2(x, y);
-        }
-
-        return new THREE.Vector2(0, 0);
     }
 }

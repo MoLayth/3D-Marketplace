@@ -96,8 +96,8 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
             product.hdrI_Brightness,
             product.hdri,
             product.background,
-            product.defaultRotation,
-            product.cameraDefaultZPos
+            product.controlsDefaultTarget,
+            product.cameraDefaultPos
         );
 
         div.addEventListener('click', (e) => {
