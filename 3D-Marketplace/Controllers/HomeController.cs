@@ -2,6 +2,7 @@ using _3D_Marketplace.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Resources;
 
 namespace _3D_Marketplace.Controllers {
     public class HomeController : Controller {
@@ -93,7 +94,7 @@ namespace _3D_Marketplace.Controllers {
             UserData user = GetUserViaCookies();
             if (user == null) return Unauthorized();
 
-                var existingProduct = user.products.FirstOrDefault(p => p.Id == dto.ProductId);
+            var existingProduct = user.products.FirstOrDefault(p => p.Id == dto.ProductId);
             ProductData Product = existingProduct ?? new ProductData();
             string safeFolderName = Path.Join("3d-assets",GetSafeStringForPath(user.UserName) ,GetSafeStringForPath(Product.Folder));
 
@@ -250,15 +251,12 @@ namespace _3D_Marketplace.Controllers {
 
         [HttpDelete]
         public async Task<IActionResult> DeleteProduct(int productId) {
-            Console.WriteLine("-----------------------------------------------------------------------------------");
-            Console.WriteLine("DeleteProduct called with productId: " + productId);
-
             UserData user = GetUserViaCookies();
             if (user == null) return Unauthorized();
             ProductData product = user.products.FirstOrDefault(p => p.Id == productId);
             if (product == null) return NotFound();
 
-            string safeFolderName = Path.Join("3d-assets", GetSafeStringForPath(user.UserName), GetSafeStringForPath(product.Folder));
+            string safeFolderName = Path.Join(_webHostEnvironment.WebRootPath,"resources", "3d-assets", GetSafeStringForPath(user.UserName), GetSafeStringForPath(product.Folder));
             if (Directory.Exists(safeFolderName)) {
                 // try to delete the hole folder, if it fails delete the files one by one and then throw the exception
                 try { Directory.Delete(safeFolderName, recursive: true); }

@@ -128,8 +128,12 @@ export class MaterialInfo {
         if (this.#makeMaterialTransmission) {
             this.modelMaterial.transmission = 1;
             this.modelMaterial.transparent = true;
+            this.modelMaterial.metalness = 0;
+            this.modelMaterial.roughness= 0;
         } else {
             this.modelMaterial.transmission = 0;
+            this.modelMaterial.metalness = 1;
+            this.modelMaterial.roughness= 1;
             this.modelMaterial.transparent = this.alphaMap !== null;
         }
     }

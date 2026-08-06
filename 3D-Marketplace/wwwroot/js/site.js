@@ -66,12 +66,14 @@ const tabContainer = document.getElementById('tabElementContainer');
  */
 async function switchToTab(tabName,extraInfo) {
 
-    // check if the user is sign in
-    const checkResponse = await fetch('/Home/IsUserSignIn', { method: 'GET' });
-    const isUserSignIn = await checkResponse.json();
-    if (!isUserSignIn) {
-        showWarningMessage("Sign In/ Create Account First");
-        return;
+    if (tabName !== 'StoreItems') {
+        // check if the user is sign in
+        const checkResponse = await fetch('/Home/IsUserSignIn', { method: 'GET' });
+        const isUserSignIn = await checkResponse.json();
+        if (!isUserSignIn) {
+            showWarningMessage("Sign In/ Create Account First");
+            return;
+        }
     }
 
     let html = "";

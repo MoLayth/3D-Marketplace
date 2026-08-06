@@ -30,7 +30,7 @@ export function init3DView() {
     canvas.appendChild(render.domElement);
 
     controls = new OrbitControls(camera, render.domElement);
-    controls.enablePan = false;
+    //controls.enablePan = false;
 
     Timer = new THREE.Timer();
     Timer.connect(document);

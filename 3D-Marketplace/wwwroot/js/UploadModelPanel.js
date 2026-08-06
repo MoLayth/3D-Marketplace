@@ -25,7 +25,7 @@ render.setSize(canvas_container.clientWidth, canvas_container.clientHeight);
 canvas_container.appendChild(render.domElement);
 
 const controls = new OrbitControls(camera, render.domElement);
-controls.enablePan = false;
+//controls.enablePan = false;
 
 const fpxLoader = new FBXLoader();
 const gltfLoader = new GLTFLoader();
@@ -247,12 +247,6 @@ function creatMaterial(name,material) {
     materialContainer.appendChild(createInfoField('Alpha Test', 'number', material.getAlphaTest(), (v) => { material.setAlphaTest(v) }));
     materialContainer.appendChild(createToggleButton('Use Double Side', material.getUseDoubleSide(), (v) => { material.setUseDoubleSide(v); }));
 
-    materialContainer.appendChild(createToggleButton('Make Material Transmission', material.getMakeMaterialTransmission(), (v) => {
-        material.setMakeMaterialTransmission(v);
-        if (v == true) glassMaterialContainer.style.display = 'flex';
-        else glassMaterialContainer.style.display = 'none';
-    }));
-
     const glassMaterialContainer = document.createElement('div');
     glassMaterialContainer.style.width = '100%';
     glassMaterialContainer.classList.add('column-Flex-Container');
@@ -260,6 +254,12 @@ function creatMaterial(name,material) {
     glassMaterialContainer.appendChild(createInfoField('Thickness', 'number', material.getThickness(), (v) => { material.setThickness(v); }));
     glassMaterialContainer.appendChild(createInfoField('IOR', 'number', material.getIOR(), (v) => { material.setIOR(v); }));
     glassMaterialContainer.style.display = 'none';
+
+    materialContainer.appendChild(createToggleButton('Make Material Transmission', material.getMakeMaterialTransmission(), (v) => {
+        material.setMakeMaterialTransmission(v);
+        if (v == true) glassMaterialContainer.style.display = 'flex';
+        else glassMaterialContainer.style.display = 'none';
+    }));
 
     materialContainer.appendChild(glassMaterialContainer);
 
@@ -503,15 +503,15 @@ const ProjectTab = document.getElementById('ProjectId'); // this well come usefu
 const saveProjectBtn = document.getElementById('canvas-Save');
 saveProjectBtn.addEventListener('click', async () => {
 
-    if (saveProjectBtn.disabled) return;
-    saveProjectBtn.disabled = true;
-    saveProjectBtn.classList.add('disabled');
-
     if (productNameInput.value == "") {
         ProjectTab.click();
         productNameInput.reportValidity();
         return;
     }
+
+    if (saveProjectBtn.disabled) return;
+    saveProjectBtn.disabled = true;
+    saveProjectBtn.classList.add('disabled');
 
     function appendAsset(formData, assetValue, fileFieldName, pathFieldName) {
         if (assetValue instanceof File || assetValue instanceof Blob) {
@@ -560,7 +560,6 @@ saveProjectBtn.addEventListener('click', async () => {
         const productName = responseData.name;
         productId = responseData.id; // this well prevent the dubliction of the product on stor item when the user hit save multiple times
 
-        //---------------------------------------------------------------------------------
         canvas_removeModelBtn.parentElement.style.display = 'none';
         canvas_deleteProjectBtn.parentElement.style.display = 'flex';
         canvas_publishProjectBtn.parentElement.style.display = 'flex';
@@ -601,9 +600,11 @@ saveProjectBtn.addEventListener('click', async () => {
 
         saveProjectBtn.classList.remove('disabled');
         showSuccessMessage("Project Saved Successfully");
+        saveProjectBtn.disabled = false;
     }
     else {
         showWarningMessage("Failed to save the project. Please try again.");
+        saveProjectBtn.disabled = false;
     }
 });
 
@@ -742,9 +743,9 @@ async function start() {
                 matInfo.setEmissionColor(mat.Emission_Color);
                 matInfo.setAlphaTest(mat.alphaTest);
                 matInfo.setUseDoubleSide(mat.UseDoubleSide);
-                matInfo.setMakeMaterialTransmission(mat.MakeMaterialTransmission);
                 matInfo.setIOR(mat.IOR);
                 matInfo.setThickness(mat.Thickness);
+                matInfo.setMakeMaterialTransmission(mat.makeMaterialTransmission);
 
                 // Apply Textures
                 if (mat.BaseColor) matInfo.applyTexture('map', mat.BaseColor);
@@ -793,6 +794,7 @@ async function start() {
                     resetView();
                 }
             } catch (error) {
+                console.error("Error loading model:", error);
                 showWarningMessage("oppps something went wrong while loading the model, please try again later");
             }
         }
