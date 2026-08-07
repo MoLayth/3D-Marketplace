@@ -38,6 +38,10 @@ namespace _3D_Marketplace.Migrations
                     b.Property<string>("BaseColor")
                         .HasColumnType("varchar(500)");
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("char(7)");
+
                     b.Property<string>("Emission")
                         .HasColumnType("varchar(500)");
 
@@ -54,6 +58,9 @@ namespace _3D_Marketplace.Migrations
                     b.Property<string>("Metallic")
                         .HasColumnType("varchar(500)");
 
+                    b.Property<float>("MetalnessProperty")
+                        .HasColumnType("real");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("varchar(300)");
@@ -69,6 +76,9 @@ namespace _3D_Marketplace.Migrations
 
                     b.Property<string>("Roughness")
                         .HasColumnType("varchar(500)");
+
+                    b.Property<float>("RoughnessProperty")
+                        .HasColumnType("real");
 
                     b.Property<float>("Thickness")
                         .HasColumnType("real");

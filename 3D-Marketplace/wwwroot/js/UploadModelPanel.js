@@ -4,12 +4,12 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { MaterialInfo } from './MyModels.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const scene = new THREE.Scene(); // Set up the scene
+const scene = new THREE.Scene();
 
 const canvas_container = document.getElementById('canvas-container');
 
-const cameraDefaultPos = new THREE.Vector3(0, 0, 10);     // <-- this new
-const controlsDefaultTarget = new THREE.Vector3(0, 0, 0); // <-- this new
+const cameraDefaultPos = new THREE.Vector3(0, 0, 10);     
+const controlsDefaultTarget = new THREE.Vector3(0, 0, 0); 
 
 const camera = new THREE.PerspectiveCamera(45, canvas_container.clientWidth / canvas_container.clientHeight, 0.1, 100);
 camera.position.copy(cameraDefaultPos);
@@ -55,6 +55,7 @@ const canvas_removeModelBtn = document.getElementById('canvas-removeModelBtn');
 canvas_removeModelBtn.addEventListener('click', () => {
     scene.remove(model);
     model = null;
+    _3dModel = null;
     render.render(scene, camera)
     updateCanvasUI();
 
@@ -74,27 +75,26 @@ fpxFileInput.addEventListener('change', (event) => {
     _3dModel = event.target.files[0];
     if (!_3dModel) return;
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const buffer = e.target.result;
-        const fileName = _3dModel.name.toLowerCase();
+    const objectUrl = URL.createObjectURL(_3dModel);
+    const fileName = _3dModel.name.toLowerCase();
 
-        if (fileName.endsWith('.fbx')) {
-            const fbxObject = fpxLoader.parse(buffer, '');
+    if (fileName.endsWith('.fbx')) {
+        fpxLoader.load(objectUrl, (fbxObject) => {
             setupLoadedModel(fbxObject);
-        } else {
-            gltfLoader.parse(buffer, '', function (gltf) {
-                setupLoadedModel(gltf.scene);
-            });
-        }
+            URL.revokeObjectURL(objectUrl);
+        });
+    } else {
+        gltfLoader.load(objectUrl, (gltf) => {
+            setupLoadedModel(gltf.scene);
+            URL.revokeObjectURL(objectUrl);
+        });
     }
-    reader.readAsArrayBuffer(_3dModel);
 });
 
 /**
   * @param {THREE.Object3D} loadedSceneOrObject
  */
-function setupLoadedModel(loadedSceneOrObject) {
+async function setupLoadedModel(loadedSceneOrObject) {
     model = loadedSceneOrObject;
 
     tabsSpace.innerHTML = "";
@@ -104,11 +104,11 @@ function setupLoadedModel(loadedSceneOrObject) {
     let tabsName = [];
     let HTMLMaterialElements = [];
 
-    // sett all the material if there is any
+    const textureWaitPromises = [];
+
+    //// sett all the material if there is any
     modelMaterials.forEach(mat => {
         materialMap.set(mat.name, mat);
-        tabsName.push(mat.name);
-        HTMLMaterialElements.push(creatMaterial(mat.name, mat));
     })
 
     model.traverse((child) => {
@@ -128,20 +128,35 @@ function setupLoadedModel(loadedSceneOrObject) {
     function processMaterial(mat) {
         if (!mat || !mat.name) return mat;
 
-        // If we already created a MaterialInfo wrapper for this material name, reuse it
         if (materialMap.has(mat.name)) {
             return materialMap.get(mat.name).modelMaterial;
         }
 
         const customMatInfo = new MaterialInfo(mat.name);
+        
+        if (mat.map) textureWaitPromises.push(customMatInfo.applyTexture('map', mat.map));
+        if (mat.roughnessMap) textureWaitPromises.push(customMatInfo.applyTexture('roughnessMap', mat.roughnessMap));
+        if (mat.metalnessMap) textureWaitPromises.push(customMatInfo.applyTexture('metalnessMap', mat.metalnessMap));
+        if (mat.normalMap) textureWaitPromises.push(customMatInfo.applyTexture('normalMap', mat.normalMap));
+        if (mat.emissiveMap) textureWaitPromises.push(customMatInfo.applyTexture('emissiveMap', mat.emissiveMap));
+        if (mat.aoMap) textureWaitPromises.push(customMatInfo.applyTexture('aoMap', mat.aoMap));
+        if (mat.alphaMap) textureWaitPromises.push(customMatInfo.applyTexture('alphaMap', mat.alphaMap));
+
         materialMap.set(mat.name, customMatInfo);
         modelMaterials.push(customMatInfo);
 
-        tabsName.push(mat.name);
-        HTMLMaterialElements.push(creatMaterial(mat.name, customMatInfo));
 
         return customMatInfo.modelMaterial;
     }
+
+    await Promise.all(textureWaitPromises);
+
+    modelMaterials.forEach((mat) => {
+        HTMLMaterialElements.push(creatMaterial(mat.name, mat));
+        tabsName.push(mat.name);
+        console.log(mat.name);
+    })
+    
 
     for (var i = 0; i < HTMLMaterialElements.length; i++) {
         materialSpace.appendChild(HTMLMaterialElements[i]);
@@ -229,17 +244,23 @@ function creatMaterial(name,material) {
     materialContainer.classList.add('column-Flex-Container');
     materialContainer.style.gap = '10px';
 
-    materialContainer.appendChild(createImageField('Base Color', material.BaseColorMap, (file) => material.applyTexture('map', file)));
-    materialContainer.appendChild(createImageField('Roughness', material.roughnessMap, (file) => material.applyTexture('roughnessMap', file)));
-    materialContainer.appendChild(createImageField('Metallic', material.metallicMap, (file) => material.applyTexture('metalnessMap', file)));
-    materialContainer.appendChild(createImageField('Normal Map', material.normalMap, (file) => material.applyTexture('normalMap', file)));
-    materialContainer.appendChild(createImageField('Emission', material.emissionMap, (file) => material.applyTexture('emissiveMap', file)));
-    materialContainer.appendChild(createImageField('Ambient Occlusion', material.aoMap, (file) => material.applyTexture('aoMap', file)));
-    materialContainer.appendChild(createImageField('Alpha', material.alphaMap, (file) => material.applyTexture('alphaMap', file)));
+    materialContainer.appendChild(createImageField('Base Color', convertToURLIfFile(material.BaseColorMap), (file) => material.applyTexture('map', file)));
+    materialContainer.appendChild(createImageField('Roughness', convertToURLIfFile(material.roughnessMap), (file) => material.applyTexture('roughnessMap', file)));
+    materialContainer.appendChild(createImageField('Metallic', convertToURLIfFile(material.metallicMap), (file) => material.applyTexture('metalnessMap', file)));
+    materialContainer.appendChild(createImageField('Normal Map', convertToURLIfFile(material.normalMap), (file) => material.applyTexture('normalMap', file)));
+    materialContainer.appendChild(createImageField('Emission', convertToURLIfFile(material.emissionMap), (file) => material.applyTexture('emissiveMap', file)));
+    materialContainer.appendChild(createImageField('Ambient Occlusion', convertToURLIfFile(material.aoMap), (file) => material.applyTexture('aoMap', file)));
+    materialContainer.appendChild(createImageField('Alpha', convertToURLIfFile(material.alphaMap), (file) => material.applyTexture('alphaMap', file)));
 
     const whiteSpace = document.createElement('div');
     whiteSpace.style.height = '10px';
     materialContainer.appendChild(whiteSpace);
+
+    materialContainer.appendChild(createInfoField('Color', 'color', material.getColor(), (v) => { material.setColor(v); }))
+    const metalnessField = createInfoField('Metalness', 'number', material.getMetalness(), (v) => { material.setMetalness(v) });
+    const roughnessField = createInfoField('Roughness', 'number', material.getRoughness(), (v) => { material.setRoughness(v) });
+    materialContainer.appendChild(metalnessField);
+    materialContainer.appendChild(roughnessField);;
 
     materialContainer.appendChild(createInfoField('Normal Map Strength', 'number', material.getNormalMapStrength(), (v) => { material.setNormalMapStrength(v); }));
     materialContainer.appendChild(createInfoField('Emission Brightness', 'number', material.getEmissionBrightness(), (v) => { material.setEmissionBrightness(v); }));
@@ -257,13 +278,30 @@ function creatMaterial(name,material) {
 
     materialContainer.appendChild(createToggleButton('Make Material Transmission', material.getMakeMaterialTransmission(), (v) => {
         material.setMakeMaterialTransmission(v);
-        if (v == true) glassMaterialContainer.style.display = 'flex';
-        else glassMaterialContainer.style.display = 'none';
+        if (v == true) {
+            glassMaterialContainer.style.display = 'flex';
+            metalnessField.style.display = 'none';
+            roughnessField.style.display = 'none';
+            
+        }
+        else {
+            glassMaterialContainer.style.display = 'none';
+            metalnessField.style.display = 'flex';
+            roughnessField.style.display = 'flex';
+        }
     }));
 
     materialContainer.appendChild(glassMaterialContainer);
 
     return materialContainer;
+
+    // this will convert the object of type file or blob to url
+    function convertToURLIfFile(object) {
+        if (object instanceof File || object instanceof Blob) {
+            return URL.createObjectURL(object);
+        }
+        return object;
+    }
 }
 
 /**
@@ -506,7 +544,7 @@ saveProjectBtn.addEventListener('click', async () => {
     if (productNameInput.value == "") {
         ProjectTab.click();
         productNameInput.reportValidity();
-        return;
+        return; 
     }
 
     if (saveProjectBtn.disabled) return;
@@ -581,7 +619,7 @@ saveProjectBtn.addEventListener('click', async () => {
             appendTextureToForm(formData, mat.roughnessMap, 'RoughnessFile', 'RoughnessPath');
             appendTextureToForm(formData, mat.metallicMap, 'MetallicFile', 'MetallicPath');
             appendTextureToForm(formData, mat.normalMap, 'NormalMapFile', 'NormalMapPath');
-            appendTextureToForm(formData, mat.emissionFile, 'EmissionFile', 'EmissionPath');
+            appendTextureToForm(formData, mat.emissionMap, 'EmissionFile', 'EmissionPath');
             appendTextureToForm(formData, mat.aoMap, 'AmbientOcclusionFile', 'AmbientOcclusionPath');
             appendTextureToForm(formData, mat.alphaMap, 'AlphaFile', 'AlphaPath');
 
@@ -592,6 +630,12 @@ saveProjectBtn.addEventListener('click', async () => {
             formData.append('Thickness', mat.getThickness());
             formData.append('NormalMapStrength', mat.getNormalMapStrength());
             formData.append('UseDoubleSide', mat.getUseDoubleSide());
+            console.log("-----------");
+            console.log(mat.getColor());
+            console.log("-----------");
+            formData.append('Color', mat.getColor());
+            formData.append('MetalnessProperty', mat.getMetalness());
+            formData.append('RoughnessProperty', mat.getRoughness());
             formData.append('MakeMaterialTransmission', mat.getMakeMaterialTransmission());
 
             return fetch('/Home/SaveMaterial', { method: 'POST', body: formData });
@@ -604,6 +648,7 @@ saveProjectBtn.addEventListener('click', async () => {
     }
     else {
         showWarningMessage("Failed to save the project. Please try again.");
+        saveProjectBtn.classList.remove('disabled');
         saveProjectBtn.disabled = false;
     }
 });
@@ -745,6 +790,9 @@ async function start() {
                 matInfo.setUseDoubleSide(mat.UseDoubleSide);
                 matInfo.setIOR(mat.IOR);
                 matInfo.setThickness(mat.Thickness);
+                matInfo.setColor(mat.color);
+                matInfo.setMetalness(mat.MetalnessProperty);
+                matInfo.setRoughness(mat.RoughnessProperty);
                 matInfo.setMakeMaterialTransmission(mat.makeMaterialTransmission);
 
                 // Apply Textures
@@ -811,12 +859,7 @@ async function start() {
                 loader.load(modelPath,(fbx) => resolve(fbx),undefined,(error) => reject(error));
             } else {
                 const loader = new GLTFLoader();
-                loader.load(
-                    modelPath,
-                    (gltf) => resolve(gltf.scene),
-                    undefined,
-                    (error) => reject(error)
-                );
+                loader.load(modelPath, (gltf) => resolve(gltf.scene), undefined, (error) => reject(error));
             }
         });
     }

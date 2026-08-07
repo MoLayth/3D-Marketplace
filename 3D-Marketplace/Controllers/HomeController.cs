@@ -179,6 +179,9 @@ namespace _3D_Marketplace.Controllers {
             public float NormalMapStrength { get; set; } = 1.0f;
             public bool UseDoubleSide { get; set; }
             public bool MakeMaterialTransmission { get; set; }
+            public string Color;
+            public float MetalnessProperty = 0.0f;
+            public float RoughnessProperty = .5f;
         }
         // this should be run after i create the product
         [HttpPost]
@@ -237,6 +240,12 @@ namespace _3D_Marketplace.Controllers {
             material.NormalMap_Strength = dto.NormalMapStrength;
             material.UseDoubleSide = dto.UseDoubleSide;
             material.makeMaterialTransmission = dto.MakeMaterialTransmission;
+            material.Color = dto.Color;
+            material.MetalnessProperty = dto.MetalnessProperty;
+            material.RoughnessProperty = dto.RoughnessProperty;
+            Console.WriteLine("------------------------------------------------------");
+            Console.WriteLine(dto.Color);
+            Console.WriteLine("------------------------------------------------------");
 
             if (existingMaterial == null) {
                 product.Materials.Add(material);
@@ -262,9 +271,10 @@ namespace _3D_Marketplace.Controllers {
                 try { Directory.Delete(safeFolderName, recursive: true); }
 
                 catch (Exception) {
-                    DeleteFileIfExist(product.Thumbnail);
 
+                    DeleteFileIfExist(product.Thumbnail);
                     DeleteFileIfExist(product._3dModel);
+
                     if (product.HDRI != defaultHDMIPath) DeleteFileIfExist(product.HDRI);
                     if (product.Background != defaultBackgroundPath) DeleteFileIfExist(product.Background);
                     foreach (var material in product.Materials) {

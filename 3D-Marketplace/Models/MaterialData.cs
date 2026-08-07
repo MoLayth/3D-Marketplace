@@ -8,6 +8,12 @@ namespace _3D_Marketplace.Models {
         [Column(TypeName = "varchar(300)")]
         public string Name { get; set; }
 
+        [Column(TypeName = "char(7)")]
+        public string Color { get; set; } = "#FFFFFF";
+        public float MetalnessProperty { get; set; } = 0.0f;
+        public float RoughnessProperty { get; set; } = .5f;
+
+
         [Column(TypeName = "varchar(500)")]
         public string? BaseColor { get; set; }
 
