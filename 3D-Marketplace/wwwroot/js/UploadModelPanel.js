@@ -142,6 +142,7 @@ async function setupLoadedModel(loadedSceneOrObject) {
         if (mat.aoMap) textureWaitPromises.push(customMatInfo.applyTexture('aoMap', mat.aoMap));
         if (mat.alphaMap) textureWaitPromises.push(customMatInfo.applyTexture('alphaMap', mat.alphaMap));
 
+
         materialMap.set(mat.name, customMatInfo);
         modelMaterials.push(customMatInfo);
 
@@ -154,7 +155,6 @@ async function setupLoadedModel(loadedSceneOrObject) {
     modelMaterials.forEach((mat) => {
         HTMLMaterialElements.push(creatMaterial(mat.name, mat));
         tabsName.push(mat.name);
-        console.log(mat.name);
     })
     
 
@@ -630,9 +630,6 @@ saveProjectBtn.addEventListener('click', async () => {
             formData.append('Thickness', mat.getThickness());
             formData.append('NormalMapStrength', mat.getNormalMapStrength());
             formData.append('UseDoubleSide', mat.getUseDoubleSide());
-            console.log("-----------");
-            console.log(mat.getColor());
-            console.log("-----------");
             formData.append('Color', mat.getColor());
             formData.append('MetalnessProperty', mat.getMetalness());
             formData.append('RoughnessProperty', mat.getRoughness());
@@ -790,9 +787,9 @@ async function start() {
                 matInfo.setUseDoubleSide(mat.UseDoubleSide);
                 matInfo.setIOR(mat.IOR);
                 matInfo.setThickness(mat.Thickness);
-                matInfo.setColor(mat.color);
-                matInfo.setMetalness(mat.MetalnessProperty);
-                matInfo.setRoughness(mat.RoughnessProperty);
+                matInfo.setColor(mat.Color);
+                matInfo.setMetalness(mat.MetalnessProperty ?? 0);
+                matInfo.setRoughness(mat.RoughnessProperty ?? 0.5);
                 matInfo.setMakeMaterialTransmission(mat.makeMaterialTransmission);
 
                 // Apply Textures

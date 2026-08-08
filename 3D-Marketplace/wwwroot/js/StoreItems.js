@@ -8,9 +8,10 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
     const storeItem = document.getElementById('storeItem');
 
     async function setUp() {
-        const response = await fetch('/Home/GetAllProducts');
-        const products = await response.json();
+        //const response = await fetch('/Home/GetAllProducts');
+        //const products = await response.json();
 
+        // products are set in the cshtml when the page load
         products.forEach((p) => {
             const materials = [];
             const rawMaterials = p.materials || p.Materials || [];
@@ -25,9 +26,12 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
                 matInfo.setEmissionColor(mat.emission_Color ?? mat.Emission_Color ?? "#ffffff");
                 matInfo.setAlphaTest(mat.alphaTest ?? 0);
                 matInfo.setUseDoubleSide(mat.useDoubleSide ?? mat.UseDoubleSide ?? false);
-                matInfo.setMakeMaterialTransmission(mat.makeMaterialTransmission ?? mat.MakeMaterialTransmission ?? false);
                 matInfo.setIOR(mat.ior ?? mat.IOR ?? 1.5);
                 matInfo.setThickness(mat.thickness ?? mat.Thickness ?? 0);
+                matInfo.setColor(mat.color ?? mat.Color ?? "#FFFFFF");
+                matInfo.setMetalness(mat.metalnessProperty ?? mat.MetalnessProperty ?? 0);
+                matInfo.setRoughness(mat.roughnessProperty ?? mat.RoughnessProperty ?? 0.5);
+                matInfo.setMakeMaterialTransmission(mat.makeMaterialTransmission ?? mat.MakeMaterialTransmission ?? false);
 
                 const baseColor = mat.baseColor || mat.BaseColor;
                 const roughness = mat.roughness || mat.Roughness;

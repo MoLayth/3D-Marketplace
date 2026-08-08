@@ -23,7 +23,7 @@
 			<input id="nameInput" type="text" value="@Model?.Name" />
 		</div>
 
-		<textarea id="bioInput" style="width:100%; max-width:550px; height:400px" placeholder="Bio">@Model?.Bio</textarea>
+		<textarea id="bioInput" style="width:100%; max-width:550px; height:400px; padding:10px" placeholder="Bio">@Model?.Bio</textarea>
 		<div class="Row-Flex-Container" style="gap:10px">
 			<button id="saveProfileBtn" style="font-size:large; width:150px">Save</button>
 			<button id="signOutBtn" style="font-size:large; background:#cd0006; width:150px">SignOut</button>
@@ -34,11 +34,8 @@
 		@{
 			ViewData["UserName"] = Model?.UserName;
 		}
-		@await Html.PartialAsync("StoreItems")
+		<div id="sellerProductsContainer" style="width:100%;"></div>
 	</div>
 </div>
 
-<script>
-	const currentUsername = "@Model?.UserName";
-</script>
 <script src="/js/EditProfile.js?v=@DateTime.Now.Ticks"></script>

@@ -1,6 +1,7 @@
 ﻿@{
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = "Items";
 }
+@model ProductData[]
 
 <div class="Row-Flex-Container" id="storeItem" style="padding:10px; gap:10px; flex-wrap:wrap"></div>
 
@@ -34,8 +35,8 @@
         }
     }
 </script>
-<script>
-    var userName = '@ViewData["UserName"]';
+<script>   
+    var products = @Html.Raw(Json.Serialize(Model));
 </script>
 <script type="module" src="/js/3dView.js?v=@DateTime.Now.Ticks"></script>
 <script type="module" src="/js/StoreItems.js?v=@DateTime.Now.Ticks"></script>

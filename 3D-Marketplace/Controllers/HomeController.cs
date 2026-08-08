@@ -2,7 +2,6 @@ using _3D_Marketplace.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Resources;
 
 namespace _3D_Marketplace.Controllers {
     public class HomeController : Controller {
@@ -21,6 +20,9 @@ namespace _3D_Marketplace.Controllers {
             if (user != null) {
                 ViewData["Name"] = user.Name;
                 ViewData["ProfilePic"] = user.ProfilePicture;
+
+                string? username = Request.Cookies["RememberMeUser"];
+                ViewData["UserName"] = username;
             }
 
             return View(_context.products.ToArray());
@@ -32,13 +34,20 @@ namespace _3D_Marketplace.Controllers {
             return View("UploadModelPanel", targetProduct);
         }
 
-        public IActionResult GetAllProducts() {
-            return Json(_context.products.Include(p=>p.Materials).Include(p => p.Seller).ToArray());
-        }
-        public IActionResult LoadTab_StoreItems() {
-            string? username = Request.Cookies["RememberMeUser"];
-            ViewData["UserName"] = username;
-            return PartialView("StoreItems");
+        //public IActionResult GetAllProducts() {
+        //    return Json(_context.products.Include(p=>p.Materials).Include(p => p.Seller).ToArray());
+        //}
+
+        public IActionResult LoadTab_StoreItems(string targetSellerProducts) {
+            ProductData[] products = null;
+            if (string.IsNullOrEmpty(targetSellerProducts)) {
+                products = _context.products.Include(p => p.Materials).Include(p => p.Seller).ToArray();
+            }
+            else {
+                products = _context.products.Include(p => p.Materials).Include(p => p.Seller).Where(p => p.Seller.UserName == targetSellerProducts).ToArray();
+            }
+
+            return PartialView("StoreItems",model: products);
         }
         public IActionResult LoadTab_EditProfile() {
             string? username = Request.Cookies["RememberMeUser"];
@@ -179,9 +188,9 @@ namespace _3D_Marketplace.Controllers {
             public float NormalMapStrength { get; set; } = 1.0f;
             public bool UseDoubleSide { get; set; }
             public bool MakeMaterialTransmission { get; set; }
-            public string Color;
-            public float MetalnessProperty = 0.0f;
-            public float RoughnessProperty = .5f;
+            public string Color { get; set; } = "#FFFFFF";
+            public float MetalnessProperty { get; set; } = 0.0f;
+            public float RoughnessProperty { get; set; } = .5f;
         }
         // this should be run after i create the product
         [HttpPost]
@@ -240,12 +249,9 @@ namespace _3D_Marketplace.Controllers {
             material.NormalMap_Strength = dto.NormalMapStrength;
             material.UseDoubleSide = dto.UseDoubleSide;
             material.makeMaterialTransmission = dto.MakeMaterialTransmission;
-            material.Color = dto.Color;
+            material.Color = dto.Color ?? "#FFFFFF";
             material.MetalnessProperty = dto.MetalnessProperty;
             material.RoughnessProperty = dto.RoughnessProperty;
-            Console.WriteLine("------------------------------------------------------");
-            Console.WriteLine(dto.Color);
-            Console.WriteLine("------------------------------------------------------");
 
             if (existingMaterial == null) {
                 product.Materials.Add(material);

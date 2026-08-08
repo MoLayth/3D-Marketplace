@@ -50,7 +50,9 @@
     // save profile
     document.getElementById('saveProfileBtn').addEventListener('click', async () => {
         const formData = new FormData();
-        formData.append("username", currentUsername);
+
+        // this userName is set in the _Layout.cshtml
+        formData.append("username", userName);
         formData.append("name", nameInput.value);
         formData.append("bio", bioInput.value);
         formData.append("removePicture", isImageRemoved);
@@ -80,7 +82,8 @@
             return;
         }
 
-        const respawn = await fetch(`/Home/DeleteAccount?username=${encodeURIComponent(currentUsername)}`, {
+        // this userName is set in the _Layout.cshtml
+        const respawn = await fetch(`/Home/DeleteAccount?username=${encodeURIComponent(userName)}`, {
             method: 'POST'
         });
         if (!respawn.ok) {
@@ -99,4 +102,52 @@
         fetch('/Home/SicgnOut', { method: 'POst' });
         window.location.reload();
     })
+
+    const sellerProductsContainer = document.getElementById("sellerProductsContainer");
+
+    async function setUpTheProducts() {
+        try {
+            const url = `/Home/LoadTab_StoreItems?targetSellerProducts=${encodeURIComponent(userName)}`;
+            const response = await fetch(url, { method: 'GET' });
+
+            if (response.ok) {
+                const htmlText = await response.text();
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+
+                sellerProductsContainer.innerHTML = '';
+
+                // Append non-script DOM nodes into sellerProductsContainer
+                Array.from(doc.body.childNodes).forEach(node => {
+                    if (node.tagName !== 'SCRIPT') {
+                        sellerProductsContainer.appendChild(node.cloneNode(true));
+                    }
+                });
+
+                // Re-create and execute script elements sequentially
+                const scripts = doc.querySelectorAll('script');
+                for (const oldScript of scripts) {
+                    const newScript = document.createElement('script');
+
+                    // Copy all attributes (type="importmap", src, etc.)
+                    Array.from(oldScript.attributes).forEach(attr => {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+
+                    newScript.textContent = oldScript.textContent;
+
+                    document.head.appendChild(newScript);
+                }
+
+            } else {
+                showWarningMessage("Something Went Wrong!!!");
+            }
+        } catch (error) {
+            console.error("Failed to load products:", error);
+            showWarningMessage("Something Went Wrong!!!");
+        }
+    }
+
+    setUpTheProducts();
 })();
