@@ -180,6 +180,7 @@ textarea:focus{
 }
 
 .Store-item-cover:hover {
+    z-index:100;
     transform: scale(1.05);
     /* Syntax: offset-x | offset-y | blur-radius | spread-radius | color */
     box-shadow: -10px 5px 10px 5px rgb(0, 0, 0, 0.30)
@@ -215,34 +216,6 @@ textarea:focus{
     padding-top:5px;
     gap:5px
 }
-
-table {
-    width: 100%;
-}
-
-th {
-    background: white;
-    color: #1B1B1B;
-    text-align: center;
-}
-
-td {
-    border: 1px solid white;
-    text-align: center;
-}
-
-.interactive-td {
-    cursor: pointer;
-}
-
-    .interactive-td:hover {
-        color: black;
-        background: white;
-    }
-
-        .interactive-td:hover img {
-            filter: invert(1);
-        }
 
 /*-------------------------------------------------------------------------------------------*/
 .search-bar {

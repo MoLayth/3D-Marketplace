@@ -134,6 +134,8 @@ async function setupLoadedModel(loadedSceneOrObject) {
 
         const customMatInfo = new MaterialInfo(mat.name);
         
+        //console.log(mat);
+
         if (mat.map) textureWaitPromises.push(customMatInfo.applyTexture('map', mat.map));
         if (mat.roughnessMap) textureWaitPromises.push(customMatInfo.applyTexture('roughnessMap', mat.roughnessMap));
         if (mat.metalnessMap) textureWaitPromises.push(customMatInfo.applyTexture('metalnessMap', mat.metalnessMap));
@@ -141,7 +143,20 @@ async function setupLoadedModel(loadedSceneOrObject) {
         if (mat.emissiveMap) textureWaitPromises.push(customMatInfo.applyTexture('emissiveMap', mat.emissiveMap));
         if (mat.aoMap) textureWaitPromises.push(customMatInfo.applyTexture('aoMap', mat.aoMap));
         if (mat.alphaMap) textureWaitPromises.push(customMatInfo.applyTexture('alphaMap', mat.alphaMap));
-
+        //console.log('#' + mat.color.getHexString());
+        if (mat.color) customMatInfo.setColor('#' + mat.color.getHexString());
+        if (mat.roughness) customMatInfo.setRoughness(mat.roughness);
+        if (mat.emissive) customMatInfo.setEmissionColor('#' + mat.emissive.getHexString());
+        if (mat.metalness) customMatInfo.setMetalness(mat.metalness);
+        if (mat.transparent) {
+            if (mat.thickness) customMatInfo.setThickness(mat.thickness);
+            if (mat.ior) customMatInfo.setThickness(mat.ior);
+            customMatInfo.setMakeMaterialTransmission(true);
+        }
+        if (mat.side == 2) customMatInfo.setUseDoubleSide(true);
+        // ths property only set when loading the model it can not be set manuly
+        if (mat.stencilZFail) customMatInfo.modelMaterial.stencilZFail = mat.stencilZFail;
+        if (mat.stencilZPass) customMatInfo.modelMaterial.stencilZPass = mat.stencilZPass;
 
         materialMap.set(mat.name, customMatInfo);
         modelMaterials.push(customMatInfo);
@@ -280,14 +295,14 @@ function creatMaterial(name,material) {
         material.setMakeMaterialTransmission(v);
         if (v == true) {
             glassMaterialContainer.style.display = 'flex';
-            metalnessField.style.display = 'none';
-            roughnessField.style.display = 'none';
+            //metalnessField.style.display = 'none';
+            //roughnessField.style.display = 'none';
             
         }
         else {
             glassMaterialContainer.style.display = 'none';
-            metalnessField.style.display = 'flex';
-            roughnessField.style.display = 'flex';
+            //metalnessField.style.display = 'flex';
+            //roughnessField.style.display = 'flex';
         }
     }));
 

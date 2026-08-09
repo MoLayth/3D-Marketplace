@@ -8,8 +8,6 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
     const storeItem = document.getElementById('storeItem');
 
     async function setUp() {
-        //const response = await fetch('/Home/GetAllProducts');
-        //const products = await response.json();
 
         // products are set in the cshtml when the page load
         products.forEach((p) => {
@@ -93,6 +91,31 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
         const label = document.createElement('label');
         label.textContent = product.name;
         label.classList.add('Store-item-cover-label');
+
+        //console.log(product); // for refrence
+        // give the crator the applity to quicly publish the project via btn
+        if (!product.isPublished) { // and i need to show if only the current user is the seller for the product
+            const publishBtn = document.createElement('img');
+            publishBtn.classList.add('publishBtn');
+            publishBtn.src = '/resources/paper-plane.svg'
+            publishBtn.style.height = '15px';
+            publishBtn.style.position = 'absolute';
+            publishBtn.style.right = '5px';
+            publishBtn.style.top = '5px';
+
+            publishBtn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+
+                const response = await fetch(`Home/PublishProduct?productId=${product.id}`);
+                if (response.ok) {
+                    showSuccessMessage('Product Publish');
+                    publishBtn.style.display = 'none';
+                } else {
+                    showWarningMessage('Failed');
+                }
+            });
+            div.appendChild(publishBtn);
+        }
 
         div.appendChild(label);
 

@@ -89,7 +89,11 @@ async function switchToTab(tabName,extraInfo) {
             response = await fetch(`/Home/LoadTab_UploadMode?productId=${extraInfo} `, { method: 'POST' });
             break;
         case 'StoreItems':
-            response = await fetch('/Home/LoadTab_StoreItems', { method: 'POST' });
+            //response = await fetch('/Home/LoadTab_StoreItems', { method: 'POST' });
+            const form = new FormData();
+            form.append('targetSellerProducts', null);
+            form.append('publishOnly', true);
+            response = await fetch(`/Home/LoadTab_StoreItems?targetSellerProducts=${null}&publishOnly=${true}`, { method: 'GET' });
             break;
     }
 

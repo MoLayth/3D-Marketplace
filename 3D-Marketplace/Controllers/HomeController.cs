@@ -2,6 +2,7 @@ using _3D_Marketplace.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace _3D_Marketplace.Controllers {
     public class HomeController : Controller {
@@ -38,16 +39,30 @@ namespace _3D_Marketplace.Controllers {
         //    return Json(_context.products.Include(p=>p.Materials).Include(p => p.Seller).ToArray());
         //}
 
-        public IActionResult LoadTab_StoreItems(string targetSellerProducts) {
-            ProductData[] products = null;
+        public async Task<IActionResult> PublishProduct(int productId) {
+            ProductData product = _context.products.FirstOrDefault(p => p.Id == productId);
+
+            if (product == null) return NotFound();
+            product.isPublished = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpGet]
+        public IActionResult LoadTab_StoreItems(string targetSellerProducts,bool publishOnly) {
+            IQueryable<ProductData> products;
             if (string.IsNullOrEmpty(targetSellerProducts)) {
-                products = _context.products.Include(p => p.Materials).Include(p => p.Seller).ToArray();
+                products = _context.products.Include(p => p.Materials).Include(p => p.Seller);
             }
             else {
-                products = _context.products.Include(p => p.Materials).Include(p => p.Seller).Where(p => p.Seller.UserName == targetSellerProducts).ToArray();
+                products = _context.products.Include(p => p.Materials).Include(p => p.Seller).Where(p => p.Seller.UserName == targetSellerProducts);
             }
 
-            return PartialView("StoreItems",model: products);
+            if (publishOnly) products = products.Where(p => p.isPublished == true);
+
+            return PartialView("StoreItems",model: products.ToArray());
         }
         public IActionResult LoadTab_EditProfile() {
             string? username = Request.Cookies["RememberMeUser"];
