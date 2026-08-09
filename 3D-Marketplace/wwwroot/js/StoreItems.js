@@ -58,7 +58,9 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
 
     const previewSelectedModel = document.getElementById('previewSelectedModel');
     const infoElments = document.querySelectorAll('.infoElement');
+
     const editBtn = document.getElementById('editBtn');
+    const switchPublishStateBtn = document.getElementById('switchPublishStateBtn');
 
     document.getElementById('closePreviewBtn').addEventListener('click', () => {
         previewSelectedModel.style.display = 'none';
@@ -93,29 +95,6 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
         label.classList.add('Store-item-cover-label');
 
         //console.log(product); // for refrence
-        // give the crator the applity to quicly publish the project via btn
-        if (!product.isPublished) { // and i need to show if only the current user is the seller for the product
-            const publishBtn = document.createElement('img');
-            publishBtn.classList.add('publishBtn');
-            publishBtn.src = '/resources/paper-plane.svg'
-            publishBtn.style.height = '15px';
-            publishBtn.style.position = 'absolute';
-            publishBtn.style.right = '5px';
-            publishBtn.style.top = '5px';
-
-            publishBtn.addEventListener('click', async (event) => {
-                event.stopPropagation();
-
-                const response = await fetch(`Home/PublishProduct?productId=${product.id}`);
-                if (response.ok) {
-                    showSuccessMessage('Product Publish');
-                    publishBtn.style.display = 'none';
-                } else {
-                    showWarningMessage('Failed');
-                }
-            });
-            div.appendChild(publishBtn);
-        }
 
         div.appendChild(label);
 
@@ -126,6 +105,8 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
             product.controlsDefaultTarget,
             product.cameraDefaultPos
         );
+
+        div.productIsPublished = product.isPublished;
 
         div.addEventListener('click', (e) => {
             e.preventDefault();
@@ -142,9 +123,39 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
 
             if (userName === product.seller.userName) {
                 editBtn.style.display = 'block';
+                switchPublishStateBtn.style.display = 'block';
+
+                if (div.productIsPublished) {
+                    switchPublishStateBtn.src = '/resources/unPublished.svg';
+                } else {
+                    switchPublishStateBtn.src = '/resources/paper-plane.svg';
+                }
+
                 editBtn.onclick = () => { switchToTab('UploadMode', product.id) };
+                switchPublishStateBtn.onclick = async () => {
+
+                    const response = await fetch(`Home/SwitchProductPublishState?productId=${product.id}`);
+                    if (!response.ok) {
+                        showWarningMessage("Something went wrong!")
+                        return;
+                    }
+
+                    const state = await response.json();                    
+                    div.productIsPublished = state;
+
+                    if (state) {
+                        switchPublishStateBtn.src = '/resources/unPublished.svg';
+                        showSuccessMessage("product published");
+                    }
+                    else {
+                        switchPublishStateBtn.src = '/resources/paper-plane.svg';
+                        showSuccessMessage("product unpublished");
+                    }
+                };
+
             } else {
                 editBtn.style.display = 'none';
+                switchPublishStateBtn.style.display = 'none';
                 editBtn.onclick = () => { };
             }
 

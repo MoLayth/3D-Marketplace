@@ -38,20 +38,18 @@ namespace _3D_Marketplace.Controllers {
         //public IActionResult GetAllProducts() {
         //    return Json(_context.products.Include(p=>p.Materials).Include(p => p.Seller).ToArray());
         //}
+        public async Task<IActionResult> SwitchProductPublishState(int productId) {
 
-        public async Task<IActionResult> PublishProduct(int productId) {
             ProductData product = _context.products.FirstOrDefault(p => p.Id == productId);
-
-            if (product == null) return NotFound();
-            product.isPublished = true;
+            product.isPublished = !product.isPublished;
 
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new {state = product.isPublished });
         }
 
         [HttpGet]
-        public IActionResult LoadTab_StoreItems(string targetSellerProducts,bool publishOnly) {
+        public IActionResult LoadTab_StoreItems(string? targetSellerProducts = null,bool publishOnly = false) {
             IQueryable<ProductData> products;
             if (string.IsNullOrEmpty(targetSellerProducts)) {
                 products = _context.products.Include(p => p.Materials).Include(p => p.Seller);
@@ -60,10 +58,12 @@ namespace _3D_Marketplace.Controllers {
                 products = _context.products.Include(p => p.Materials).Include(p => p.Seller).Where(p => p.Seller.UserName == targetSellerProducts);
             }
 
-            if (publishOnly) products = products.Where(p => p.isPublished == true);
+            if (publishOnly) products = products.Where(p => p.isPublished);
 
             return PartialView("StoreItems",model: products.ToArray());
         }
+
+        
         public IActionResult LoadTab_EditProfile() {
             string? username = Request.Cookies["RememberMeUser"];
             return PartialView("EditProfile", model: _context.Users.FirstOrDefault(u => u.UserName == username));

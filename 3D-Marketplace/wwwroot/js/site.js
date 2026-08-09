@@ -71,7 +71,7 @@ async function switchToTab(tabName,extraInfo) {
         const checkResponse = await fetch('/Home/IsUserSignIn', { method: 'GET' });
         const isUserSignIn = await checkResponse.json();
         if (!isUserSignIn) {
-            showWarningMessage("Sign In/ Create Account First");
+            showWarningMessage("please (sign in) / (create account) to upload your model");
             return;
         }
     }
@@ -89,11 +89,8 @@ async function switchToTab(tabName,extraInfo) {
             response = await fetch(`/Home/LoadTab_UploadMode?productId=${extraInfo} `, { method: 'POST' });
             break;
         case 'StoreItems':
-            //response = await fetch('/Home/LoadTab_StoreItems', { method: 'POST' });
-            const form = new FormData();
-            form.append('targetSellerProducts', null);
-            form.append('publishOnly', true);
-            response = await fetch(`/Home/LoadTab_StoreItems?targetSellerProducts=${null}&publishOnly=${true}`, { method: 'GET' });
+            //response = await fetch('/Home/LoadTab_StoreItems', { method: 'GET' });
+            response = await fetch(`/Home/LoadTab_StoreItems?targetSellerProducts=${''}&publishOnly=${true}`, { method: 'GET' });
             break;
     }
 

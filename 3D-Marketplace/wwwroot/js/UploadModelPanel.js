@@ -684,7 +684,24 @@ canvas_deleteProjectBtn.addEventListener('click', async () => {
     }
 });
 const canvas_publishProjectBtn = document.getElementById('canvas-publishProjectBtn');
+canvas_publishProjectBtn.addEventListener('click', async () => {
+    const response = await fetch(`Home/SwitchProductPublishState?productId=${productId}`);
+    if (!response.ok) {
+        showWarningMessage("Something went wrong!")
+        return;
+    }
 
+    const state = await response.json();
+
+    if (state) {
+        canvas_publishProjectBtn.src = '/resources/unPublished.svg';
+        showSuccessMessage("product published");
+    }
+    else {
+        canvas_publishProjectBtn.src = '/resources/paper-plane.svg';
+        showSuccessMessage("product unpublished");
+    }
+});
 
 const thumbnailImage = document.getElementById('thumbnailImage');
 document.getElementById('canvas-takeScreenshot').addEventListener('click', capturedThumbnail);
@@ -785,6 +802,11 @@ async function start() {
         setDefault_HDMI();
         setDefault_Background();
     } else {
+
+        // update the publishProjectBtn to match the current state of the model
+        if (product.isPublished) canvas_publishProjectBtn.src = '/resources/unPublished.svg';
+        else canvas_publishProjectBtn.src = '/resources/paper-plane.svg';
+
         // Clear existing materials array to prevent duplicate push issues
         modelMaterials.length = 0;
 
