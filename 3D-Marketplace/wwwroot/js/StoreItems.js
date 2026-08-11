@@ -116,7 +116,8 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
 
             // 2. Set details
             productName.textContent = product.name;
-            productDescription.textContent = product.description;
+            //productDescription.textContent = product.description;
+            productDescription.innerHTML = product.description || '<p>No description available.</p>';
             productPrice.textContent = `$${product.price.toFixed(2)}`;
             productSellerName.textContent = product.seller.name;
             productSellerImage.src = product.seller.profilePicture ?? '/resources/avatar.svg';
@@ -125,7 +126,7 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
                 editBtn.style.display = 'block';
                 switchPublishStateBtn.style.display = 'block';
 
-                if (div.productIsPublished) {
+                if (div.productIsPublished == true) {
                     switchPublishStateBtn.src = '/resources/unPublished.svg';
                 } else {
                     switchPublishStateBtn.src = '/resources/paper-plane.svg';
@@ -140,10 +141,10 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
                         return;
                     }
 
-                    const state = await response.json();                    
-                    div.productIsPublished = state;
+                    const data = await response.json();
+                    div.productIsPublished = data.state;
 
-                    if (state) {
+                    if (data.state == true) {
                         switchPublishStateBtn.src = '/resources/unPublished.svg';
                         showSuccessMessage("product published");
                     }
@@ -169,5 +170,43 @@ import { MaterialInfo, SceneInfo } from './MyModels.js';
         });
 
         return div;
+    }
+
+    const nameAndInfo = document.getElementById('nameAndInfo');
+    const canvas = document.getElementById('canvas');
+    window.addEventListener('click', () => {
+        updateLayout();
+    });
+
+    /**
+    * @type {'horizontal' | 'vertical'}
+    */
+    let currentLayout = 'horizontal';
+    function updateLayout() {
+        const layoutChangeTrigger = 900;
+        // if that the case change the layout
+        if (window.innerWidth < layoutChangeTrigger && currentLayout == 'horizontal') {
+
+            nameAndInfo.style.fontSize = '10px';
+            nameAndInfo.style.top = 'unset';
+            nameAndInfo.style.bottom = '50px';
+
+            const canvasWidth = canvas.clientWidth;
+            //nameAndInfo.style.maxWidth = `${canvasWidth - 20}px`;
+            nameAndInfo.style.width = 'calc(100% - 80px)';
+            
+
+            currentLayout = 'vertical';
+        }
+        else if (window.innerWidth >= layoutChangeTrigger && currentLayout == 'vertical') {
+
+            nameAndInfo.style.fontSize = '16px';
+            nameAndInfo.style.bottom = 'unset';
+            nameAndInfo.style.top = '30px';
+            nameAndInfo.style.maxWidth = '600px';
+            nameAndInfo.style.width = 'auto';
+
+            currentLayout = 'horizontal';
+        }
     }
 })();

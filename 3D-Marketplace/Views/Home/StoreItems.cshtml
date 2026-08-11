@@ -3,7 +3,7 @@
 }
 @model ProductData[]
 
-<div class="Row-Flex-Container" id="storeItem" style="padding:10px; gap:10px; flex-wrap:wrap"></div>
+<div class="Row-Flex-Container" id="storeItem" style="justify-content:center; padding:10px; gap:10px; flex-wrap:wrap"></div>
 
 <div class="blur-panel" id="previewSelectedModel" style="display:none; position:fixed; left:0; top:0; right:0; bottom:0; z-index:1000;">
 
@@ -18,8 +18,11 @@
         <img id="closePreviewBtn" class="image-btn" src="/resources/X.svg" />
     </div>
 
-    <h1 class="infoElement" id="productName" style="top:30px; left:40px; position:absolute;"></h1>
-    <span class="infoElement" id="productDescription" style="top:75px; left:40px; position:absolute; max-width:400px; word-wrap:break-word;"></span>
+    <div class="column-Flex-Container infoElement" id="nameAndInfo" style="position:absolute; top:30px; left:40px;  gap:10px; max-width:600px;">
+        <h3  id="productName"></h3>
+        <div style=" width:100%; text-wrap:wrap; word-wrap:break-word; font-size:inherit" id="productDescription"></div>
+    </div>
+
     <span class="infoElement" id="productPrice" style="bottom:30px; left:30px; position:absolute; font-size:medium"></span>
     <div class="infoElement" style="bottom:30px; right:30px; position:absolute;">
         <span id="productSellerName"></span>

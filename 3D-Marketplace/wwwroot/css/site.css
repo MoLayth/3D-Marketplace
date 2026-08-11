@@ -333,3 +333,88 @@ textarea:focus{
         transform: scaleY(100%);
     }
 }
+
+/*-------------------------------- Quill Dark Theme Overrides --------------------------------*/
+/* Container & Editor Outer Shell */
+.ql-container.ql-snow {
+    border: 1px solid #ffffff !important;
+    border-top: none !important; /* Joined cleanly to toolbar */
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+/* Toolbar Shell & Top Corners */
+.ql-toolbar.ql-snow {
+    border: 1px solid #ffffff !important;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: #2d2d2d;
+}
+
+/* Toolbar Icons & Picker Styling */
+.ql-snow .ql-stroke {
+    stroke: #e0e0e0 !important;
+}
+
+.ql-snow .ql-fill {
+    fill: #e0e0e0 !important;
+}
+
+.ql-snow .ql-picker {
+    color: #e0e0e0 !important;
+}
+
+/* Hover & Active Tool Button States */
+.ql-snow button:hover .ql-stroke,
+.ql-snow button.ql-active .ql-stroke {
+    stroke: #3b82f6 !important;
+}
+
+.ql-snow button:hover .ql-fill,
+.ql-snow button.ql-active .ql-fill {
+    fill: #3b82f6 !important;
+}
+
+/* Fix: Insert Link Popup / Tooltip Menu Dark Theme */
+.ql-snow .ql-tooltip {
+    background-color: #2d2d2d !important;
+    color: #ffffff !important;
+    border: 1px solid #ffffff !important;
+    border-radius: 5px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+    /* Link Popup Input Field & Action Buttons */
+    .ql-snow .ql-tooltip input[type=text] {
+        background-color: #1e1e1e !important;
+        color: #ffffff !important;
+        border: 1px solid #555555 !important;
+        border-radius: 3px;
+        padding: 3px 6px;
+    }
+
+    .ql-snow .ql-tooltip a.ql-action::before {
+        color: #3b82f6 !important;
+    }
+
+    .ql-snow .ql-tooltip a.ql-remove::before {
+        color: #ef4444 !important;
+    }
+
+/* Dropdown Pickers Dark Overlay (e.g., header/font options) */
+.ql-snow .ql-picker-options {
+    background-color: #2d2d2d !important;
+    border: 1px solid #ffffff !important;
+    border-radius: 5px;
+}
+
+/* Placeholder Text */
+.ql-editor.ql-blank::before {
+    color: #888888 !important;
+}
+.ql-editor {
+    font-size: 16px;
+    line-height: 1.6;
+}

@@ -78,7 +78,7 @@
 
     // delete account
     document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
-        if (!confirm("are you sure about that?")) {
+        if (!confirm("are you sure about deleting your account?")) {
             return;
         }
 
@@ -95,7 +95,7 @@
 
     // sign out
     document.getElementById('signOutBtn').addEventListener('click', () => {
-        if (!confirm("are you sure about that?")) {
+        if (!confirm("are you sure you want to sign out?")) {
             return;
         }
 
@@ -149,5 +149,31 @@
         }
     }
 
+    /**
+     * @type {'horizontal' | 'vertical'}
+     */
+    let currentLayout = 'horizontal';
+
+    const editProfileContainer = document.getElementById('editProfileContainer');
+    window.addEventListener('resize', () => {
+        updateLayout();
+    })
+
+    function updateLayout() {
+        const layoutChangeTrigger = 900;
+        // if that the case change the layout
+        if (window.innerWidth < layoutChangeTrigger && currentLayout == 'horizontal') {
+            editProfileContainer.classList.remove('Row-Flex-Container');
+            editProfileContainer.classList.add('column-Flex-Container');
+            currentLayout = 'vertical';
+        }
+        else if (window.innerWidth >= layoutChangeTrigger && currentLayout == 'vertical') {
+            editProfileContainer.classList.remove('column-Flex-Container');
+            editProfileContainer.classList.add('Row-Flex-Container');
+            currentLayout = 'horizontal';
+        }
+    }
+
+    updateLayout();
     setUpTheProducts();
 })();

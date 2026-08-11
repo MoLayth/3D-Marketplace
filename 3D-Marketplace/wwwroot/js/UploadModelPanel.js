@@ -53,7 +53,7 @@ function updateCanvasUI() {
 
 const canvas_removeModelBtn = document.getElementById('canvas-removeModelBtn');
 canvas_removeModelBtn.addEventListener('click', () => {
-    scene.remove(model);
+    scene.remove(model)
     model = null;
     _3dModel = null;
     render.render(scene, camera)
@@ -550,8 +550,11 @@ document.getElementById('headerTabs').appendChild(createTabs(headerTabsName, hea
 const productNameInput = document.getElementById('productName');
 const productPriceInput = document.getElementById('productPrice');
 const StockInput = document.getElementById('StockInput');
-const DescriptionInput = document.getElementById('DescriptionInput');
+//const DescriptionInput = document.getElementById('DescriptionInput');
 const ProjectTab = document.getElementById('ProjectId'); // this well come useful in reportValidity
+
+
+
 // save the project without publishing it
 const saveProjectBtn = document.getElementById('canvas-Save');
 saveProjectBtn.addEventListener('click', async () => {
@@ -600,7 +603,8 @@ saveProjectBtn.addEventListener('click', async () => {
     productFormData.append("ProductName", productNameInput.value);
     productFormData.append("productPrice", productPriceInput.value);
     productFormData.append("Stock", StockInput.value);
-    productFormData.append("Description", DescriptionInput.value);
+    //productFormData.append("Description", DescriptionInput.value);
+    productFormData.append("Description", uploadPanelQuill? uploadPanelQuill.getSemanticHTML() : '');
 
     const saveResponse = await fetch('/Home/SaveProduct', {
         method: 'POST',
@@ -684,6 +688,7 @@ canvas_deleteProjectBtn.addEventListener('click', async () => {
     }
 });
 const canvas_publishProjectBtn = document.getElementById('canvas-publishProjectBtn');
+const canvas_publishProjectBtnLabel = document.getElementById('canvas-publishProjectBtn-label');
 canvas_publishProjectBtn.addEventListener('click', async () => {
     const response = await fetch(`Home/SwitchProductPublishState?productId=${productId}`);
     if (!response.ok) {
@@ -691,15 +696,17 @@ canvas_publishProjectBtn.addEventListener('click', async () => {
         return;
     }
 
-    const state = await response.json();
+    const data = await response.json();
 
-    if (state) {
+    if (data.state) {
         canvas_publishProjectBtn.src = '/resources/unPublished.svg';
-        showSuccessMessage("product published");
+        canvas_publishProjectBtnLabel.textContent = "Unpublish";
+        showSuccessMessage("Product Published");
     }
     else {
         canvas_publishProjectBtn.src = '/resources/paper-plane.svg';
-        showSuccessMessage("product unpublished");
+        canvas_publishProjectBtnLabel.textContent = "Publish";
+        showSuccessMessage("Product Unpublished");
     }
 });
 
@@ -775,13 +782,21 @@ function animate(timestamp) {
 
 
 // update when trying to resize the window
-window.addEventListener('resize', () => {
-    camera.aspect = canvas_container.clientWidth / canvas_container.clientHeight;
+const canvasResizeObserver = new ResizeObserver(() => {
+    const width = canvas_container.clientWidth;
+    const height = canvas_container.clientHeight;
+
+    if (width === 0 || height === 0) return;
+
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
 
-    render.setSize(canvas_container.clientWidth, canvas_container.clientHeight);
+    render.setSize(width, height);
     render.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-})
+});
+
+// Observe changes on the canvas container element directly
+canvasResizeObserver.observe(canvas_container);
 
 document.getElementById("canvas-resetViewButton").addEventListener('click', () => {
     resetView();
@@ -796,6 +811,58 @@ function resetView() {
     controls.update();
 }
 
+/**
+* @type {'horizontal' | 'vertical'}
+*/
+let currentLayout = 'horizontal';
+
+const uploadModelPanelContainer = document.getElementById('uploadModelPanelContainer');
+const settingContainer = document.getElementById('settingContainer');
+window.addEventListener('resize', () => {
+    updateLayout();
+
+})
+
+function updateLayout() {
+    const layoutChangeTrigger = 900;
+    // if that the case change the layout
+    if (window.innerWidth < layoutChangeTrigger && currentLayout == 'horizontal') {
+        uploadModelPanelContainer.classList.remove('Row-Flex-Container');
+        uploadModelPanelContainer.classList.add('column-Flex-Container');
+
+        canvas_container.style.height = '500px';
+        canvas_container.style.flexShrink = '0';
+
+        settingContainer.style.flexShrink = '1';
+        settingContainer.style.width = '100%';
+
+        uploadModelPanelContainer.style.flexDirection = 'column-reverse';
+        currentLayout = 'vertical';
+    }
+    else if (window.innerWidth >= layoutChangeTrigger && currentLayout == 'vertical') {
+        uploadModelPanelContainer.classList.remove('column-Flex-Container');
+        uploadModelPanelContainer.classList.add('Row-Flex-Container');
+        uploadModelPanelContainer.style.flexDirection = 'row';
+
+        canvas_container.style.height = '100%';
+        canvas_container.style.flexShrink = '1';
+
+        settingContainer.style.flexShrink = '0';
+        settingContainer.style.width = '450px';
+
+        currentLayout = 'horizontal';
+    }
+
+
+    if (canvas_container.clientWidth > 0 && canvas_container.clientHeight > 0) {
+        camera.aspect = canvas_container.clientWidth / canvas_container.clientHeight;
+        camera.updateProjectionMatrix();
+        render.setSize(canvas_container.clientWidth, canvas_container.clientHeight);
+    }
+}
+updateLayout();
+
+
 // this should have all the function and ui data manipulation that need to run when the pag load
 async function start() {
     if (productId <= 0 || !product) {
@@ -804,8 +871,14 @@ async function start() {
     } else {
 
         // update the publishProjectBtn to match the current state of the model
-        if (product.isPublished) canvas_publishProjectBtn.src = '/resources/unPublished.svg';
-        else canvas_publishProjectBtn.src = '/resources/paper-plane.svg';
+        if (product.isPublished) {
+            canvas_publishProjectBtn.src = '/resources/unPublished.svg';
+            canvas_publishProjectBtnLabel.textContent = "Unpublish";
+        }
+        else {
+            canvas_publishProjectBtn.src = '/resources/paper-plane.svg';
+            canvas_publishProjectBtnLabel.textContent = "Publish";
+        }
 
         // Clear existing materials array to prevent duplicate push issues
         modelMaterials.length = 0;
@@ -863,7 +936,11 @@ async function start() {
         productName.value = product.Name;
         productPriceInput.value = product.Price;
         StockInput.value = product.Stock;
-        DescriptionInput.value = product.Description;
+        //DescriptionInput.value = product.Description;
+        if (uploadPanelQuill && product.Description) {
+            // Inject the saved HTML into the editor
+            uploadPanelQuill.clipboard.dangerouslyPasteHTML(product.Description);
+        }
 
 
         _3dModel = product._3dModel;
