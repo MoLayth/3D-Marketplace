@@ -1,4 +1,4 @@
-# 3D-Marketplace
+# 3D-Marketplace <img src="https://img.shields.io/badge/C%23-%2317BC17.svg" alt="C# Badge"> <img src="https://img.shields.io/badge/HTML5-%23E34F26.svg?logo=html5&logoColor=white" alt="HTML5 Badge"> <img src="https://img.shields.io/badge/CSS3-%231572B6.svg?logo=css3&logoColor=white" alt="CSS3 Badge"> <img src="https://img.shields.io/badge/JavaScript-%23F7DF1E.svg?logo=javascript&logoColor=black" alt="JavaScript Badge"> <img src="https://img.shields.io/badge/.NET%20Core-512BD4?logo=dotnet&logoColor=white" alt=".NET Core Badge"> <img src="https://img.shields.io/badge/Three.js-black?style=flat&logo=three.js&logoColor=white" alt="Three.js Badge">
 A high-performance, full-stack web application designed for 3D artists and sellers to upload, configure, and showcase 3D models directly in the browser. Built with ASP.NET Core and Vanilla JavaScript, this platform features a robust, SPA-like tabbed interface and a powerful built-in 3D engine powered by Three.js.
 
 <img width="1526" height="863" alt="image" src="https://github.com/user-attachments/assets/751b78a7-c1c3-40f0-afe9-7a1b74a5bfa6" />
