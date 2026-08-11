@@ -5,22 +5,26 @@ A high-performance, full-stack web application designed for 3D artists and selle
 
 ## Capabilities & Features
 The application goes far beyond simple model viewing, offering an integrated 3D studio environment directly in the web browser:
-1. Broad Format Support: Users can seamlessly upload .fbx, .gltf, and .glb files. and also automatically extracts the tetxure and property frome .gltf file and assign them to the new generated ui, and also its uporrt unlimited number of materials for models.
-2. Dynamic Material Editor: The app automatically parses loaded models and generates dedicated UI tabs for every individual material found on the mesh.
-3. Full PBR Workflow: Artists can upload and map custom textures for Base Color, Roughness, Metallic, Normal, Emission, Ambient Occlusion, and Alpha channels.
-4. Glass & Transmission Physics: Supports advanced material properties including IOR (Index of Refraction), volumetric thickness, and transmission for realistic glass and liquid rendering.
-5. Parametric Tweaking: Users can fine-tune metalness, roughness, normal map strength, emission brightness/color, and alpha testing via intuitive UI controls.
-6. Environment Control: The scene is fully customizable, allowing users to upload their own HDRI environment maps and custom background images, as well as adjust overall scene brightness/exposure.
-7. Integrated Thumbnail Generator: Includes a custom screenshot utility that temporarily isolates the 3D model, captures a high-quality snapshot using the renderer, and assigns it as the product's marketplace thumbnail.
-8. when you set a thumbnail for the product when the user open to view your product it get represented with the same view that you set.
+1. **Broad Format Support**: Seamlessly upload `.fbx`, `.gltf`, and `.glb` files. Automatically extracts textures and material properties from `.gltf` files to populate the generated UI, with support for an unlimited number of materials per model.
+2. **Dynamic Material Editor**: Automatically parses loaded models and generates dedicated UI tabs for every individual material found on the mesh.
+3. **Full PBR Workflow**: Map custom textures for Base Color, Roughness, Metallic, Normal, Emission, Ambient Occlusion, and Alpha channels.
+4. **Glass & Transmission Physics**: Supports advanced material properties including IOR (Index of Refraction), volumetric thickness, and transmission for realistic glass and liquid rendering.
+5. **Parametric Tweaking**: Fine-tune metalness, roughness, normal map strength, emission brightness/color, and alpha testing via intuitive UI controls.
+6. **Environment Control**: Upload custom HDRI environment maps or background images, and adjust overall scene lighting/exposure.
+7. **Integrated Thumbnail Generator**: A custom snapshot utility isolates the model, captures a high-resolution snapshot using the WebGL renderer, and sets it as the product thumbnail.
+8. **Camera Perspective Sync**: Setting a thumbnail locks in the exact camera view and orientation, so prospective buyers view the product from the artist's specified angle.
 
 https://github.com/user-attachments/assets/3b828ef7-ddda-4626-a9db-89359296f728
 
 https://github.com/user-attachments/assets/f76065c1-e461-41b1-bb51-94b9aee83313
 
+https://github.com/user-attachments/assets/19fec412-f2a9-4ce8-8280-15a238dbe367
+
 ## E-Commerce & Storefront Integration
-The platform operates as a fully functional marketplace for showing 3d products:
-1. Custom Profiles: Users can edit their display names and write personal bios.
-2. Avatar Uploads: Supports .png and .jpg profile picture uploads with automatic file-size validation (limiting uploads to under 3MB) and circular image formatting.
-3. Seller Portfolios: A user's profile dynamically fetches and displays their specific published products, acting as a personal portfolio.
-4. Account Lifecycle: Full support for secure sign-in, account creation (with username validation), signing out, and permanent account deletion.
+A complete marketplace ecosystem for showcasing assets and managing creator portfolios:
+1. **Custom Profiles**: Edit display names, bios, and personal portfolio details.
+2. **Avatar Uploads**: Supports `.png` and `.jpg` uploads with automatic file-size validation (under 3MB) and circular formatting.
+3. **Seller Portfolios**: Dynamically fetches and showcases all published products directly on the seller's profile page.
+4. **Account Lifecycle**: Secure sign-in, account creation with username validation, session sign-out, and permanent account deletion options.
+
+https://github.com/user-attachments/assets/5cfb8f5e-3b18-4c7b-96f2-0cd9f4387741
