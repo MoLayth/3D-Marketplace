@@ -56,6 +56,7 @@ canvas_removeModelBtn.addEventListener('click', () => {
     scene.remove(model)
     model = null;
     _3dModel = null;
+    modelMaterials.length = 0;
     render.render(scene, camera)
     updateCanvasUI();
 
