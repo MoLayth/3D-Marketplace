@@ -489,7 +489,7 @@ function createToggleButton(labelText, defaultValue = false, onPress) {
 }
 
 let sceneBrightness = 1;
-document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createInfoField('Scene Brightness', 'number', product?.HDRI_Brightness ?? 1, (v) => {
+document.getElementById('infoContainer').insertAdjacentElement('afterbegin', createInfoField('Scene Brightness', 'number', product?.HDRI_Brightness ?? sceneBrightness, (v) => {
     sceneBrightness = parseFloat(v);
     render.toneMappingExposure = sceneBrightness;
 }));
@@ -918,6 +918,7 @@ async function start() {
 
         if (product.HDRI) applyHDMITexture(product.HDRI);
         if (product.Background) applyBackground(product.Background);
+        render.toneMappingExposure = product.sceneBrightness;
 
         let data_cameraDefaultPos = null;
         let data_controlsDefaultTarget = null;
