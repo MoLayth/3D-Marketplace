@@ -918,7 +918,7 @@ async function start() {
 
         if (product.HDRI) applyHDMITexture(product.HDRI);
         if (product.Background) applyBackground(product.Background);
-        render.toneMappingExposure = product.sceneBrightness;
+        render.toneMappingExposure = product.HDRI_Brightness;
 
         let data_cameraDefaultPos = null;
         let data_controlsDefaultTarget = null;
